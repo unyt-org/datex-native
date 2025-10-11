@@ -47,20 +47,67 @@ impl LanguageServer for LanguageServerBackend {
         let file = compiler_workspace.load_file(
             params.text_document.uri.to_file_path().unwrap(),
             params.text_document.text
-        ).unwrap();
-        self.client
-            .log_message(
-                MessageType::INFO,
-                format!("File compiled, DXB size: {}", file.compiled_dxb.as_ref().map_or(0, |dxb| dxb.len())),
-            )
-            .await;
-        self.client
-            .log_message(
-                MessageType::INFO,
-                format!("AST: {:#?}", file.ast_with_metadata.ast),
-            )
-            .await;
+        );
+        if let Ok(file) = file {
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST: {:#?}", file.ast_with_metadata.ast),
+                )
+                .await;
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST metadata: {:#?}", *file.ast_with_metadata.metadata.borrow())
+                )
+                .await;
+        } else {
+            self.client
+                .log_message(
+                    MessageType::ERROR,
+                    format!("Failed to compile file: {}", params.text_document.uri),
+                )
+                .await;
+        }
+
     }
+
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("File changed: {}", params.text_document.uri),
+            )
+            .await;
+        let mut compiler_workspace = self.compiler_workspace.borrow_mut();
+        let new_content = params.content_changes.into_iter().next().map(|change| change.text).unwrap_or_default();
+        let file = compiler_workspace.load_file(
+            params.text_document.uri.to_file_path().unwrap(),
+            new_content
+        );
+        if let Ok(file) = file {
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST: {:#?}", file.ast_with_metadata.ast),
+                )
+                .await;
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST metadata: {:#?}", *file.ast_with_metadata.metadata.borrow())
+                )
+                .await;
+        } else {
+            self.client
+                .log_message(
+                    MessageType::ERROR,
+                    format!("Failed to compile file: {}", params.text_document.uri),
+                )
+                .await;
+        }
+    }
+
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client
