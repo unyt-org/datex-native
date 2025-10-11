@@ -1,19 +1,25 @@
-use tower_lsp::jsonrpc::Result;
-use tower_lsp::lsp_types::*;
-use tower_lsp::{Client, LanguageServer, LspService, Server};
+use std::cell::RefCell;
+use std::sync::Mutex;
+use datex_core::compiler::workspace::CompilerWorkspace;
+use realhydroper_lsp::jsonrpc::Result;
+use realhydroper_lsp::lsp_types::*;
+use realhydroper_lsp::{Client, LanguageServer, LspService, Server};
 
-#[derive(Debug)]
-pub struct Backend {
+pub struct LanguageServerBackend {
     pub client: Client,
+    pub compiler_workspace: RefCell<CompilerWorkspace>,
 }
 
-#[tower_lsp::async_trait]
-impl LanguageServer for Backend {
+#[realhydroper_lsp::async_trait(?Send)]
+impl LanguageServer for LanguageServerBackend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 completion_provider: Some(CompletionOptions::default()),
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::FULL,
+                )),
                 ..Default::default()
             },
             ..Default::default()
@@ -30,9 +36,35 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("File opened: {}", params.text_document.uri),
+            )
+            .await;
+        let mut compiler_workspace = self.compiler_workspace.borrow_mut();
+        let file = compiler_workspace.load_file(
+            params.text_document.uri.to_file_path().unwrap(),
+            params.text_document.text
+        ).unwrap();
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("File compiled, DXB size: {}", file.compiled_dxb.as_ref().map_or(0, |dxb| dxb.len())),
+            )
+            .await;
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("AST: {:#?}", file.ast_with_metadata.ast),
+            )
+            .await;
+    }
+
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client
-            .log_message(MessageType::INFO, "server initialized!")
+            .log_message(MessageType::INFO, "hover!")
             .await;
 
         Ok(Some(Hover {
@@ -43,13 +75,4 @@ impl LanguageServer for Backend {
             range: None,
         }))
     }
-}
-
-#[tokio::main]
-async fn main() {
-    let stdin = tokio::io::stdin();
-    let stdout = tokio::io::stdout();
-
-    let (service, socket) = LspService::new(|client| Backend { client });
-    Server::new(stdin, stdout, socket).serve(service).await;
 }

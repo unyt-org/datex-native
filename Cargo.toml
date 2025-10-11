@@ -14,7 +14,9 @@ clap = { version = "4.0.23", features = ["derive"] }
 datex-core = { version = "0.0.6", features = ["default", "debug"] }
 
 tokio = { version = "1.17.0", features = ["full"] }
-tower-lsp = { version = "0.20.0", features = ["proposed"] }
+#tower-lsp = { version = "0.20.0", features = ["proposed"]}
+# using fork realhydroper-lsp because tower-lsp does not support local threading (single-threaded tokio runtime), which is required by the DATEX runtime
+realhydroper-lsp = { version = "0.22.0", features = ["proposed"]}
 serde = { version = "1.0", features = ["derive"] }
 rustyline = "15.0.0"
 ratatui = "0.29.0"
