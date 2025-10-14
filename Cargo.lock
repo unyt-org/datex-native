@@ -920,6 +920,7 @@ dependencies = [
  "realhydroper-lsp",
  "rustyline",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

@@ -26,6 +26,16 @@ use realhydroper_lsp::{LspService, Server};
 async fn main() {
     let command = get_command();
 
+    // print version
+    let command = if command.version {
+        println!("datex-cli {}", env!("CARGO_PKG_VERSION"));
+        println!("datex {}", env!("DEP_DATEX_CORE_VERSION"));
+        return;
+    }
+    else {
+        command.command
+    };
+
     if let Some(cmd) = command {
         match cmd {
             Subcommands::Lsp(lsp) => {

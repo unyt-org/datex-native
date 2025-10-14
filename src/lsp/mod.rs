@@ -75,7 +75,7 @@ impl LanguageServerBackend {
         None
     }
 
-    /// Converts a LSP position (line and character) to a byte offset in the file content.
+    /// Converts an LSP position (line and character) to a byte offset in the file content.
     fn position_to_byte_offset(&self, position: &TextDocumentPositionParams) -> usize {
         let workspace = self.compiler_workspace.borrow();
         // first get file contents at position.text_document.uri

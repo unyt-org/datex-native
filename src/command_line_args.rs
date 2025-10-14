@@ -3,10 +3,12 @@ use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None, bin_name = "datex")]
-#[command(propagate_version = true)]
+#[command(disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
-    command: Option<Subcommands>,
+    pub command: Option<Subcommands>,
+    #[arg(short = 'V', long, help = "Print version")]
+    pub version: bool,
 }
 
 #[derive(Subcommand)]
@@ -38,6 +40,6 @@ pub struct Repl {
 #[derive(Args)]
 pub struct Workbench {}
 
-pub fn get_command() -> Option<Subcommands> {
-    Cli::parse().command
+pub fn get_command() -> Cli {
+    Cli::parse()
 }
