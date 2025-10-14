@@ -1,151 +1,53 @@
+mod utils;
+
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::PathBuf;
-use datex_core::ast::tree::{DatexExpression, DatexExpressionData};
-use datex_core::compiler::precompiler::VariableMetadata;
+use datex_core::ast::tree::{DatexExpression, DatexExpressionData, SimpleSpan, VariableAccess, VariableAssignment, VariableDeclaration};
+use datex_core::compiler::error::CompilerError;
 use datex_core::compiler::workspace::CompilerWorkspace;
-use realhydroper_lsp::jsonrpc::Result;
 use realhydroper_lsp::lsp_types::*;
-use realhydroper_lsp::{Client, LanguageServer, LspService, Server};
+use realhydroper_lsp::{Client, LanguageServer};
+
+pub struct SpannedCompilerError {
+    pub range: Range,
+    pub error: CompilerError,
+}
 
 pub struct LanguageServerBackend {
     pub client: Client,
     pub compiler_workspace: RefCell<CompilerWorkspace>,
+    pub spanned_compiler_errors: RefCell<HashMap<PathBuf, Vec<SpannedCompilerError>>>,
 }
 
 impl LanguageServerBackend {
-
-    async fn update_file_contents(
-        &self,
-        path: PathBuf,
-        content: String,
-    ) {
-        let mut compiler_workspace = self.compiler_workspace.borrow_mut();
-        let file = compiler_workspace.load_file(path.clone(), content);
-        if let Ok(file) = file {
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("AST: {:#?}", file.ast_with_metadata.ast),
-                )
-                .await;
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("AST metadata: {:#?}", *file.ast_with_metadata.metadata.borrow())
-                )
-                .await;
-        } else {
-            self.client
-                .log_message(
-                    MessageType::ERROR,
-                    format!(
-                        "Failed to compile file {}: {}",
-                        path.to_str().unwrap(),
-                        file.err().unwrap()
-                    ),
-                )
-                .await;
+    pub fn new(client: Client, compiler_workspace: CompilerWorkspace) -> Self {
+        Self {
+            client,
+            compiler_workspace: RefCell::new(compiler_workspace),
+            spanned_compiler_errors: RefCell::new(HashMap::new()),
         }
-    }
-
-    /// Finds all variables in the workspace whose names start with the given prefix.
-    fn find_variable_starting_with(&self, prefix: &str) -> Vec<VariableMetadata> {
-        let compiler_workspace = self.compiler_workspace.borrow();
-        let mut results = Vec::new();
-        for file in compiler_workspace.files().values() {
-            let metadata = file.ast_with_metadata.metadata.borrow();
-            for var in metadata.variables.iter() {
-                if var.name.starts_with(prefix) {
-                    results.push(var.clone());
-                }
-            }
-        }
-        results
-    }
-
-    /// Retrieves variable metadata by its unique ID.
-    fn get_variable_by_id(&self, id: usize) -> Option<VariableMetadata> {
-        let compiler_workspace = self.compiler_workspace.borrow();
-        for file in compiler_workspace.files().values() {
-            let metadata = file.ast_with_metadata.metadata.borrow();
-            if let Some(v) = metadata.variables.get(id).cloned() {
-                return Some(v);
-            }
-        }
-        None
-    }
-
-    /// Converts an LSP position (line and character) to a byte offset in the file content.
-    fn position_to_byte_offset(&self, position: &TextDocumentPositionParams) -> usize {
-        let workspace = self.compiler_workspace.borrow();
-        // first get file contents at position.text_document.uri
-        // then calculate byte offset from position.position.line and position.position.character
-        let file_path = position.text_document.uri.to_file_path().unwrap();
-        let file_content = &workspace.get_file(&file_path).unwrap().content;
-
-        Self::line_char_to_byte_index(file_content, position.position.line as usize, position.position.character as usize).unwrap_or(0)
-    }
-
-    fn get_previous_text_at_position(&self, position: &TextDocumentPositionParams) -> String {
-        let byte_offset = self.position_to_byte_offset(position);
-        let workspace = self.compiler_workspace.borrow();
-        let file_path = position.text_document.uri.to_file_path().unwrap();
-        let file_content = &workspace.get_file(&file_path).unwrap().content;
-        // Get the text before the byte offset, only matching word characters
-        let previous_text = &file_content[..byte_offset];
-        let last_word = previous_text
-            .rsplit(|c: char| !c.is_alphanumeric() && c != '_')
-            .next()
-            .unwrap_or("");
-        last_word.to_string()
-    }
-
-    /// Retrieves the DatexExpression AST node at the given byte offset.
-    fn get_expression_at_position(&self, position: &TextDocumentPositionParams) -> DatexExpression {
-        let byte_offset = self.position_to_byte_offset(position);
-        let workspace = self.compiler_workspace.borrow();
-        let file_path = position.text_document.uri.to_file_path().unwrap();
-        let ast = &workspace.get_file(&file_path).unwrap().ast_with_metadata.ast;
-        ast.as_ref().cloned().unwrap()
-    }
-
-
-    /// Converts a (line, character) pair to a byte index in the given text.
-    /// Lines and characters are zero-indexed.
-    /// Returns None if the line or character is out of bounds.
-    fn line_char_to_byte_index(text: &str, line: usize, character: usize) -> Option<usize> {
-        let mut lines = text.split('\n');
-
-        // Get the line
-        let line_text = lines.nth(line)?;
-
-        // Compute byte index of the start of that line
-        let byte_offset_to_line_start = text
-            .lines()
-            .take(line)
-            .map(|l| l.len() + 1) // +1 for '\n'
-            .sum::<usize>();
-
-        // Now find the byte index within that line for the given character offset
-        let byte_offset_within_line = line_text
-            .char_indices()
-            .nth(character)
-            .map(|(i, _)| i)
-            .unwrap_or_else(|| line_text.len());
-
-        Some(byte_offset_to_line_start + byte_offset_within_line)
     }
 }
 
+
 #[realhydroper_lsp::async_trait(?Send)]
 impl LanguageServer for LanguageServerBackend {
-    async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
+    async fn initialize(&self, _: InitializeParams) -> realhydroper_lsp::jsonrpc::Result<InitializeResult> {
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 completion_provider: Some(CompletionOptions::default()),
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
+                )),
+                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
+                    DiagnosticOptions {
+                        inter_file_dependencies: true,
+                        workspace_diagnostics: false,
+                        identifier: None,
+                        work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None }
+                    }
                 )),
                 ..Default::default()
             },
@@ -159,7 +61,7 @@ impl LanguageServer for LanguageServerBackend {
             .await;
     }
 
-    async fn shutdown(&self) -> Result<()> {
+    async fn shutdown(&self) -> realhydroper_lsp::jsonrpc::Result<()> {
         Ok(())
     }
 
@@ -191,7 +93,7 @@ impl LanguageServer for LanguageServerBackend {
         ).await;
     }
 
-    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+    async fn completion(&self, params: CompletionParams) -> realhydroper_lsp::jsonrpc::Result<Option<CompletionResponse>> {
         self.client
             .log_message(MessageType::INFO, "completion!")
             .await;
@@ -226,27 +128,107 @@ impl LanguageServer for LanguageServerBackend {
     }
 
 
-    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+    async fn hover(&self, params: HoverParams) -> realhydroper_lsp::jsonrpc::Result<Option<Hover>> {
         let expression = self.get_expression_at_position(&params.text_document_position_params);
 
-        match expression {
+        Ok(match expression.data {
             // show variable type info on hover
-            DatexExpression { data: DatexExpressionData::VariableDeclaration { name, id: Some(id), .. }, .. } |
-            DatexExpression { data: DatexExpressionData::VariableAssignment (_, Some(id), name, _), .. } |
-            DatexExpression { data: DatexExpressionData::Variable (id, name), .. } => {
+            DatexExpressionData::VariableDeclaration(VariableDeclaration { name, id: Some(id), .. }) |
+            DatexExpressionData::VariableAssignment(VariableAssignment { name, id: Some(id), .. }) |
+            DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
                 let variable_metadata = self.get_variable_by_id(id).unwrap();
-                let contents = HoverContents::Scalar(MarkedString::LanguageString(LanguageString {
-                    language: "datex".to_string(),
-                    value: format!(
-                        "{} {}: {}",
-                        variable_metadata.shape,
-                        name,
-                        variable_metadata.var_type.as_ref().unwrap()
-                    )
-                }));
-                Ok(Some(Hover { contents, range: None }))
+                Some(self.get_language_string_hover(&format!(
+                    "{} {}: {}",
+                    variable_metadata.shape,
+                    name,
+                    variable_metadata.var_type.as_ref().unwrap()
+                )))
             }
-            _ => Ok(None)
+
+            // show value info on hover for literals
+            DatexExpressionData::Integer(integer) => {
+                Some(self.get_language_string_hover(&format!("{}", integer)))
+            },
+            DatexExpressionData::TypedInteger(typed_integer) => {
+                Some(self.get_language_string_hover(&format!("{}", typed_integer)))
+            },
+            DatexExpressionData::Decimal(decimal) => {
+                Some(self.get_language_string_hover(&format!("{}", decimal)))
+            },
+            DatexExpressionData::TypedDecimal(typed_decimal) => {
+                Some(self.get_language_string_hover(&format!("{}", typed_decimal)))
+            },
+            DatexExpressionData::Boolean(boolean) => {
+                Some(self.get_language_string_hover(&format!("{}", boolean)))
+            },
+            DatexExpressionData::Text(text) => {
+                Some(self.get_language_string_hover(&format!("\"{}\"", text)))
+            },
+            DatexExpressionData::Endpoint(endpoint) => {
+                Some(self.get_language_string_hover(&format!("{}", endpoint)))
+            },
+            DatexExpressionData::Null => {
+                Some(self.get_language_string_hover("null"))
+            },
+
+            _ => None,
+        })
+    }
+    
+    // get error diagnostics
+    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> realhydroper_lsp::jsonrpc::Result<DocumentDiagnosticReportResult>
+    {
+        self.client
+            .log_message(MessageType::INFO, "diagnostics!")
+            .await;
+
+        let uri = params.text_document.uri;
+        let file_path = uri.to_file_path().unwrap();
+
+        let diagnostics = self.get_diagnostics_for_file(&file_path);
+        let report = FullDocumentDiagnosticReport {
+            result_id: None,
+            items: diagnostics,
+        };
+
+        Ok(DocumentDiagnosticReportResult::Report(
+            DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
+                related_documents: None,
+                full_document_diagnostic_report: report,
+            }))
+        )
+    }
+}
+
+
+impl LanguageServerBackend {
+    fn get_language_string_hover(&self, text: &str) -> Hover {
+        let contents = HoverContents::Scalar(MarkedString::LanguageString(LanguageString {
+            language: "datex".to_string(),
+            value: text.to_string(),
+        }));
+        Hover { contents, range: None }
+    }
+
+    fn get_diagnostics_for_file(&self, file_path: &std::path::Path) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+        let errors = self.spanned_compiler_errors.borrow();
+        if let Some(file_errors) = errors.get(file_path) {
+            for spanned_error in file_errors {
+                let diagnostic = Diagnostic {
+                    range: spanned_error.range,
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: None,
+                    code_description: None,
+                    source: Some("datex".to_string()),
+                    message: format!("{}", spanned_error.error),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                };
+                diagnostics.push(diagnostic);
+            }
         }
+        diagnostics
     }
 }

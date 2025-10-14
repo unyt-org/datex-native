@@ -43,9 +43,9 @@ async fn main() {
                 let stdout = tokio::io::stdout();
 
                 let runtime = Runtime::new(RuntimeConfig::new_with_endpoint(Endpoint::default()));
-                let compiler_workspace = RefCell::new(CompilerWorkspace::new(runtime));
+                let compiler_workspace = CompilerWorkspace::new(runtime);
                 
-                let (service, socket) = LspService::new(|client| LanguageServerBackend { client, compiler_workspace });
+                let (service, socket) = LspService::new(|client| LanguageServerBackend::new(client, compiler_workspace));
                 Server::new(stdin, stdout, socket).serve(service).await;
             }
             Subcommands::Run(run) => {
