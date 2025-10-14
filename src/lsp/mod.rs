@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
-use datex_core::ast::{DatexExpression, DatexExpressionData};
+use datex_core::ast::tree::{DatexExpression, DatexExpressionData};
 use datex_core::compiler::precompiler::VariableMetadata;
 use datex_core::compiler::workspace::CompilerWorkspace;
 use realhydroper_lsp::jsonrpc::Result;
