@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
-use datex_core::compiler::error::CompilerError;
+use datex_core::compiler::error::{CompilerError, DetailedCompilerError};
 use datex_core::compiler::precompiler::VariableMetadata;
 use datex_core::values::core_values::decimal::Decimal;
 use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
@@ -59,30 +59,20 @@ impl LanguageServerBackend {
     }
 
     /// Recursively collects spanned compiler errors into the spanned_compiler_errors field.
-    fn collect_compiler_errors(&self, compiler_error: CompilerError, path: &PathBuf, file_content: &String) {
-        match compiler_error {
-            CompilerError::Multiple(errors) => {
-                for err in errors {
-                    self.collect_compiler_errors(err, path, file_content);
-                }
-            }
-            CompilerError::Spanned(err, span) => {
-                let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
-                let file_errors = spanned_compiler_errors.entry(path.clone()).or_insert_with(Vec::new);
-                file_errors.push(SpannedCompilerError {
-                    range: self.convert_byte_range_to_document_range(span, file_content),
-                    error: *err
-                });
-            }
-            // workaround for now: if not spanned compiler error, just span the whole file
-            _ => {
-                let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
-                let file_errors = spanned_compiler_errors.entry(path.clone()).or_insert_with(Vec::new);
-                file_errors.push(SpannedCompilerError {
-                    range: self.convert_byte_range_to_document_range(0..file_content.len(), file_content),
-                    error: compiler_error
-                });
-            }
+    fn collect_compiler_errors(&self, error: DetailedCompilerError, path: &PathBuf, file_content: &String) {
+        let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
+        let file_errors = spanned_compiler_errors.entry(path.clone()).or_insert_with(Vec::new);
+
+        for error in error.errors {
+            let range = error.span.map(|span| {
+                self.convert_byte_range_to_document_range(span, file_content)
+            }).unwrap_or_else(|| {
+                self.convert_byte_range_to_document_range(0..file_content.len(), file_content)
+            });
+            file_errors.push(SpannedCompilerError {
+                range,
+                error: error.error,
+            });
         }
     }
 
