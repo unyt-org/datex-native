@@ -1,13 +1,16 @@
 mod utils;
 
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use datex_core::ast::tree::{DatexExpression, DatexExpressionData, SimpleSpan, VariableAccess, VariableAssignment, VariableDeclaration};
 use datex_core::compiler::error::CompilerError;
 use datex_core::compiler::workspace::CompilerWorkspace;
+use datex_core::types::type_container::TypeContainer;
 use realhydroper_lsp::lsp_types::*;
 use realhydroper_lsp::{Client, LanguageServer};
+use realhydroper_lsp::jsonrpc::ErrorCode;
 
 pub struct SpannedCompilerError {
     pub range: Range,
@@ -131,50 +134,60 @@ impl LanguageServer for LanguageServerBackend {
     async fn hover(&self, params: HoverParams) -> realhydroper_lsp::jsonrpc::Result<Option<Hover>> {
         let expression = self.get_expression_at_position(&params.text_document_position_params);
 
-        Ok(match expression.data {
-            // show variable type info on hover
-            DatexExpressionData::VariableDeclaration(VariableDeclaration { name, id: Some(id), .. }) |
-            DatexExpressionData::VariableAssignment(VariableAssignment { name, id: Some(id), .. }) |
-            DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
-                let variable_metadata = self.get_variable_by_id(id).unwrap();
-                Some(self.get_language_string_hover(&format!(
-                    "{} {}: {}",
-                    variable_metadata.shape,
-                    name,
-                    variable_metadata.var_type.as_ref().unwrap()
-                )))
-            }
+        if let Some(expression) = expression {
+            Ok(match expression.data {
+                // show variable type info on hover
+                DatexExpressionData::VariableDeclaration(VariableDeclaration { name, id: Some(id), .. }) |
+                DatexExpressionData::VariableAssignment(VariableAssignment { name, id: Some(id), .. }) |
+                DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
+                    let variable_metadata = self.get_variable_by_id(id).unwrap();
+                    Some(self.get_language_string_hover(&format!(
+                        "{} {}: {}",
+                        variable_metadata.shape,
+                        name,
+                        variable_metadata.var_type.unwrap_or(TypeContainer::unknown())
+                    )))
+                }
 
-            // show value info on hover for literals
-            DatexExpressionData::Integer(integer) => {
-                Some(self.get_language_string_hover(&format!("{}", integer)))
-            },
-            DatexExpressionData::TypedInteger(typed_integer) => {
-                Some(self.get_language_string_hover(&format!("{}", typed_integer)))
-            },
-            DatexExpressionData::Decimal(decimal) => {
-                Some(self.get_language_string_hover(&format!("{}", decimal)))
-            },
-            DatexExpressionData::TypedDecimal(typed_decimal) => {
-                Some(self.get_language_string_hover(&format!("{}", typed_decimal)))
-            },
-            DatexExpressionData::Boolean(boolean) => {
-                Some(self.get_language_string_hover(&format!("{}", boolean)))
-            },
-            DatexExpressionData::Text(text) => {
-                Some(self.get_language_string_hover(&format!("\"{}\"", text)))
-            },
-            DatexExpressionData::Endpoint(endpoint) => {
-                Some(self.get_language_string_hover(&format!("{}", endpoint)))
-            },
-            DatexExpressionData::Null => {
-                Some(self.get_language_string_hover("null"))
-            },
+                // show value info on hover for literals
+                DatexExpressionData::Integer(integer) => {
+                    Some(self.get_language_string_hover(&format!("{}", integer)))
+                },
+                DatexExpressionData::TypedInteger(typed_integer) => {
+                    Some(self.get_language_string_hover(&format!("{}", typed_integer)))
+                },
+                DatexExpressionData::Decimal(decimal) => {
+                    Some(self.get_language_string_hover(&format!("{}", decimal)))
+                },
+                DatexExpressionData::TypedDecimal(typed_decimal) => {
+                    Some(self.get_language_string_hover(&format!("{}", typed_decimal)))
+                },
+                DatexExpressionData::Boolean(boolean) => {
+                    Some(self.get_language_string_hover(&format!("{}", boolean)))
+                },
+                DatexExpressionData::Text(text) => {
+                    Some(self.get_language_string_hover(&format!("\"{}\"", text)))
+                },
+                DatexExpressionData::Endpoint(endpoint) => {
+                    Some(self.get_language_string_hover(&format!("{}", endpoint)))
+                },
+                DatexExpressionData::Null => {
+                    Some(self.get_language_string_hover("null"))
+                },
 
-            _ => None,
-        })
+                _ => None,
+            })
+        }
+        else {
+            Err(realhydroper_lsp::jsonrpc::Error {
+                code: ErrorCode::ParseError,
+                message: Cow::from("No AST available"),
+                data: None
+            })
+        }
+
     }
-    
+
     // get error diagnostics
     async fn diagnostic(&self, params: DocumentDiagnosticParams) -> realhydroper_lsp::jsonrpc::Result<DocumentDiagnosticReportResult>
     {

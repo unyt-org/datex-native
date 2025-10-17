@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
-use datex_core::compiler::error::{CompilerError, DetailedCompilerError};
-use datex_core::compiler::precompiler::VariableMetadata;
+use datex_core::compiler::error::DetailedCompilerErrors;
+use datex_core::compiler::precompiler::{VariableMetadata};
+use datex_core::serde::error::DetailedCompilerErrorsWithMaybeRichAst;
 use datex_core::values::core_values::decimal::Decimal;
 use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -21,37 +22,35 @@ impl LanguageServerBackend {
         let file = compiler_workspace.load_file(path.clone(), content.clone());
         // Clear previous errors for this file
         self.clear_compiler_errors(&path);
-        if let Ok(file) = file {
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("AST: {:#?}", file.ast_with_metadata.ast),
-                )
-                .await;
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("AST metadata: {:#?}", *file.ast_with_metadata.metadata.borrow())
-                )
-                .await;
-            // Clear previous errors for this file
-        } else {
-            let error = file.err().unwrap();
+        if let Some(errors) = &file.errors {
             self.client
                 .log_message(
                     MessageType::ERROR,
                     format!(
                         "Failed to compile file {}: {}",
                         path.to_str().unwrap(),
-                        error,
+                        errors,
                     ),
                 )
                 .await;
-            // Collect new errors
-            self.collect_compiler_errors(error, &path, &content)
+            self.collect_compiler_errors(errors, path, &content)
+        }
+        if let Some(rich_ast) = &file.rich_ast {
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST: {:#?}", rich_ast.ast),
+                )
+                .await;
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("AST metadata: {:#?}", *rich_ast.metadata.borrow())
+                )
+                .await;
         }
     }
-    
+
     /// Clears all compiler errors associated with the given file path.
     fn clear_compiler_errors(&self, path: &PathBuf) {
         let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
@@ -59,19 +58,19 @@ impl LanguageServerBackend {
     }
 
     /// Recursively collects spanned compiler errors into the spanned_compiler_errors field.
-    fn collect_compiler_errors(&self, error: DetailedCompilerError, path: &PathBuf, file_content: &String) {
+    fn collect_compiler_errors(&self, errors: &DetailedCompilerErrors, path: PathBuf, file_content: &String) {
         let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
         let file_errors = spanned_compiler_errors.entry(path.clone()).or_insert_with(Vec::new);
 
-        for error in error.errors {
-            let range = error.span.map(|span| {
+        for error in &errors.errors {
+            let range = error.span.as_ref().map(|span| {
                 self.convert_byte_range_to_document_range(span, file_content)
             }).unwrap_or_else(|| {
-                self.convert_byte_range_to_document_range(0..file_content.len(), file_content)
+                self.convert_byte_range_to_document_range(&(0..file_content.len()), file_content)
             });
             file_errors.push(SpannedCompilerError {
                 range,
-                error: error.error,
+                error: error.error.clone(),
             });
         }
     }
@@ -81,10 +80,12 @@ impl LanguageServerBackend {
         let compiler_workspace = self.compiler_workspace.borrow();
         let mut results = Vec::new();
         for file in compiler_workspace.files().values() {
-            let metadata = file.ast_with_metadata.metadata.borrow();
-            for var in metadata.variables.iter() {
-                if var.name.starts_with(prefix) {
-                    results.push(var.clone());
+            if let Some(rich_ast) = &file.rich_ast {
+                let metadata = rich_ast.metadata.borrow();
+                for var in metadata.variables.iter() {
+                    if var.name.starts_with(prefix) {
+                        results.push(var.clone());
+                    }
                 }
             }
         }
@@ -95,10 +96,13 @@ impl LanguageServerBackend {
     pub fn get_variable_by_id(&self, id: usize) -> Option<VariableMetadata> {
         let compiler_workspace = self.compiler_workspace.borrow();
         for file in compiler_workspace.files().values() {
-            let metadata = file.ast_with_metadata.metadata.borrow();
-            if let Some(v) = metadata.variables.get(id).cloned() {
-                return Some(v);
+            if let Some(rich_ast) = &file.rich_ast {
+                let metadata = rich_ast.metadata.borrow();
+                if let Some(v) = metadata.variables.get(id).cloned() {
+                    return Some(v);
+                }
             }
+          
         }
         None
     }
@@ -115,7 +119,7 @@ impl LanguageServerBackend {
     }
 
     /// Converts a byte range (start, end) to a document Range (start Position, end Position) in the file content.
-    fn convert_byte_range_to_document_range(&self, span: std::ops::Range<usize>, file_content: &String) -> Range {
+    fn convert_byte_range_to_document_range(&self, span: &std::ops::Range<usize>, file_content: &String) -> Range {
         let start = self.byte_offset_to_position(span.start, file_content).unwrap_or(Position { line: 0, character: 0 });
         let end = self.byte_offset_to_position(span.end, file_content).unwrap_or(Position { line: 0, character: 0 });
         Range { start, end }
@@ -160,15 +164,20 @@ impl LanguageServerBackend {
     }
 
     /// Retrieves the DatexExpression AST node at the given byte offset.
-    pub fn get_expression_at_position(&self, position: &TextDocumentPositionParams) -> DatexExpression {
+    pub fn get_expression_at_position(&self, position: &TextDocumentPositionParams) -> Option<DatexExpression> {
         let byte_offset = self.position_to_byte_offset(position);
         let workspace = self.compiler_workspace.borrow();
         let file_path = position.text_document.uri.to_file_path().unwrap();
-        let ast = &workspace.get_file(&file_path).unwrap().ast_with_metadata.ast;
-
-        let mut finder = ExpressionFinder::new(byte_offset);
-        finder.visit_expression(ast.as_ref().unwrap());
-        finder.found_expr.unwrap()
+        if let Some(rich_ast) = &workspace.get_file(&file_path).unwrap().rich_ast {
+            let ast = rich_ast.ast.as_ref();
+            let mut finder = ExpressionFinder::new(byte_offset);
+            finder.visit_expression(ast.as_ref().unwrap());
+            finder.found_expr
+        }
+        else {
+            None
+        }
+       
     }
 
 
