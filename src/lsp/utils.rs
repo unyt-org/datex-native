@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use datex_core::ast::tree::{DatexExpression, DatexExpressionData, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
+use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
 use datex_core::compiler::error::CompilerError;
 use datex_core::compiler::precompiler::VariableMetadata;
 use datex_core::values::core_values::decimal::Decimal;
@@ -283,6 +283,16 @@ impl Visit for ExpressionFinder {
             data: DatexExpressionData::VariableAccess(var_access.clone()),
             span,
         });
+    }
+
+    fn visit_list(&mut self, list: &List, span: SimpleSpan) {
+        if self.match_span(span, DatexExpression {
+            data: DatexExpressionData::List(list.clone()),
+            span,
+        }) {
+            // Also visit the assigned expression to find more specific expressions within it
+            list.visit_children_with(self);
+        }
     }
 
     fn visit_integer(&mut self, value: &Integer, span: SimpleSpan) {

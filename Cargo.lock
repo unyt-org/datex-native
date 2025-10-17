@@ -483,9 +483,9 @@ dependencies = [
 
 [[package]]
 name = "cfg-if"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
+checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "cfg_aliases"
@@ -842,9 +842,8 @@ checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
 name = "datex-core"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43b45f844946d7722ef155e91be17f357c1384e2b001cb5820c8c63354da43dd"
+version = "0.0.7"
+source = "git+https://github.com/unyt-org/datex-core?branch=feat%2Fcompiler-workspace#4d053538e15aef0ef5823074a9d4cc21ad7d2714"
 dependencies = [
  "ariadne",
  "async-stream",
@@ -868,6 +867,7 @@ dependencies = [
  "hex",
  "hyper",
  "indexmap 2.11.4",
+ "indoc",
  "internment",
  "itertools 0.14.0",
  "lazy_static",
@@ -910,7 +910,7 @@ dependencies = [
 
 [[package]]
 name = "datex_cli"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "clap",
  "crossterm",
@@ -927,8 +927,7 @@ dependencies = [
 [[package]]
 name = "datex_macros"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1922189d0e176d0b815a911357b3c20fc878512496928dc13b72c281aa6ecee"
+source = "git+https://github.com/unyt-org/datex-core?branch=feat%2Fcompiler-workspace#4d053538e15aef0ef5823074a9d4cc21ad7d2714"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2263,9 +2262,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "openssl"
-version = "0.10.73"
+version = "0.10.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8505734d46c8ab1e19a1dce3aef597ad87dcb4c37e7188231769bd6bd51cebf8"
+checksum = "24ad14dd45412269e1a30f52ad8f0664f0f4f4a89ee8fe28c3b3527021ebb654"
 dependencies = [
  "bitflags 2.9.4",
  "cfg-if",
@@ -2295,9 +2294,9 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.109"
+version = "0.9.110"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90096e2e47630d78b7d1c20952dc621f957103f8bc2c8359ec81290d75238571"
+checksum = "0a9f0075ba3c21b09f8e8b2026584b1d18d49388648f2fbbf3c97ea8deced8e2"
 dependencies = [
  "cc",
  "libc",
@@ -4686,3 +4685,7 @@ dependencies = [
  "quote",
  "syn 2.0.106",
 ]
+
+[[patch.unused]]
+name = "datex-core"
+version = "0.0.7"
