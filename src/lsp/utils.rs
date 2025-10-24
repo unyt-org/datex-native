@@ -2,7 +2,6 @@ use std::path::PathBuf;
 use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
 use datex_core::compiler::error::DetailedCompilerErrors;
 use datex_core::compiler::precompiler::{VariableMetadata};
-use datex_core::serde::error::DetailedCompilerErrorsWithMaybeRichAst;
 use datex_core::values::core_values::decimal::Decimal;
 use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
 use datex_core::values::core_values::endpoint::Endpoint;
