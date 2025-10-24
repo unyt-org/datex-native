@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
+use datex_core::ast::tree::{DatexExpression, DatexExpressionData, List, Map, SimpleSpan, Statements, VariableAccess, VariableAssignment, VariableDeclaration, Visit, Visitable};
 use datex_core::compiler::error::DetailedCompilerErrors;
 use datex_core::compiler::precompiler::{VariableMetadata};
 use datex_core::values::core_values::decimal::Decimal;
@@ -101,7 +101,7 @@ impl LanguageServerBackend {
                     return Some(v);
                 }
             }
-          
+
         }
         None
     }
@@ -176,7 +176,7 @@ impl LanguageServerBackend {
         else {
             None
         }
-       
+
     }
 
 
@@ -290,6 +290,16 @@ impl Visit for ExpressionFinder {
         }) {
             // Also visit the assigned expression to find more specific expressions within it
             list.visit_children_with(self);
+        }
+    }
+
+    fn visit_map(&mut self, map: &Map, span: SimpleSpan) {
+        if self.match_span(span, DatexExpression {
+            data: DatexExpressionData::Map(map.clone()),
+            span,
+        }) {
+            // Also visit the assigned expression to find more specific expressions within it
+            map.visit_children_with(self);
         }
     }
 
