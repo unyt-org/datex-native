@@ -73,7 +73,7 @@ async fn main() {
 async fn execute_file(run: command_line_args::Run) {
     run_async! {
         if let Some(file) = run.file {
-            let runtime = create_runtime_with_config(None, false, false).await.unwrap();
+            let runtime = create_runtime_with_config(run.config, true, false).await.unwrap();
             let file_contents = std::fs::read_to_string(file).expect("Could not read file");
             let _result = runtime.execute(&file_contents, &[], None).await;
             if let Err(e) = _result {

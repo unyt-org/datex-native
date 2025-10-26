@@ -22,6 +22,9 @@ pub enum Subcommands {
 #[derive(Args)]
 pub struct Run {
     pub file: Option<String>,
+    /// optional path to dx config file
+    #[arg(short, long)]
+    pub config: Option<PathBuf>,
 }
 
 #[derive(Args)]
