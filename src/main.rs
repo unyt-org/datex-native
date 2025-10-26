@@ -45,7 +45,7 @@ async fn main() {
 
                 let runtime = Runtime::new(RuntimeConfig::new_with_endpoint(Endpoint::default()));
                 let compiler_workspace = CompilerWorkspace::new(runtime);
-                
+
                 let (service, socket) = LspService::new(|client| LanguageServerBackend::new(client, compiler_workspace));
                 Server::new(stdin, stdout, socket).serve(service).await;
             }
@@ -73,7 +73,9 @@ async fn main() {
 async fn execute_file(run: command_line_args::Run) {
     run_async! {
         if let Some(file) = run.file {
-            let runtime = create_runtime_with_config(run.config, true, false).await.unwrap();
+            let runtime = create_runtime_with_config(run.config, false, false).await.unwrap();
+            // yield to wait for connect. TODO: better way
+            tokio::task::yield_now().await;
             let file_contents = std::fs::read_to_string(file).expect("Could not read file");
             let _result = runtime.execute(&file_contents, &[], None).await;
             if let Err(e) = _result {
