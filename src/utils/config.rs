@@ -129,6 +129,7 @@ pub fn get_config(custom_config_path: Option<PathBuf>) -> Result<RuntimeConfig, 
 pub async fn create_runtime_with_config(
     custom_config_path: Option<PathBuf>,
     force_debug: bool,
+    print_header: bool,
 ) -> Result<Runtime, ConfigError> {
     let mut config = get_config(custom_config_path)?;
     // overwrite debug mode if force_debug is true
@@ -137,14 +138,16 @@ pub async fn create_runtime_with_config(
     }
     let runtime = Runtime::create_native(config).await;
 
-    let cli_version = env!("CARGO_PKG_VERSION");
+    if print_header {
+        let cli_version = env!("CARGO_PKG_VERSION");
 
-    println!("================================================");
-    println!("DATEX REPL v{cli_version}");
-    println!("DATEX Core version: {}", runtime.version);
-    println!("Endpoint: {}", runtime.endpoint());
-    println!("\nexit using [CTRL + C]");
-    println!("================================================\n");
+        println!("================================================");
+        println!("DATEX REPL v{cli_version}");
+        println!("DATEX Core version: {}", runtime.version);
+        println!("Endpoint: {}", runtime.endpoint());
+        println!("\nexit using [CTRL + C]");
+        println!("================================================\n");
+    }
 
     Ok(runtime)
 }

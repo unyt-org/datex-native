@@ -7,6 +7,7 @@ use datex_core::utils::time_native::TimeNative;
 use std::path::PathBuf;
 use std::sync::Arc;
 use datex_core::compiler::workspace::CompilerWorkspace;
+use datex_core::decompiler::{decompile_value, DecompileOptions};
 use datex_core::values::core_values::endpoint::Endpoint;
 
 mod command_line_args;
@@ -49,10 +50,7 @@ async fn main() {
                 Server::new(stdin, stdout, socket).serve(service).await;
             }
             Subcommands::Run(run) => {
-                if run.file.is_some() {
-                    println!("File: {}", run.file.unwrap())
-                }
-                let runtime = Runtime::new(RuntimeConfig::default());
+                execute_file(run).await;
             }
             Subcommands::Repl(Repl { verbose, config }) => {
                 let options = ReplOptions {
@@ -72,6 +70,32 @@ async fn main() {
     }
 }
 
+async fn execute_file(run: command_line_args::Run) {
+    run_async! {
+        if let Some(file) = run.file {
+            let runtime = create_runtime_with_config(None, false, false).await.unwrap();
+            let file_contents = std::fs::read_to_string(file).expect("Could not read file");
+            let _result = runtime.execute(&file_contents, &[], None).await;
+            if let Err(e) = _result {
+                eprintln!("{}", e);
+            }
+            else {
+                let result = _result.unwrap();
+                if let Some(output) = result {
+                    let formatted_output = decompile_value(
+                        &output,
+                        DecompileOptions::colorized()
+                    );
+                    println!("{}", formatted_output);
+                }
+            }
+        }
+        else {
+            eprintln!("No file provided to run.");
+        }
+    }
+}
+
 async fn workbench(config_path: Option<PathBuf>, debug: bool) -> Result<(), ConfigError> {
     set_global_context(GlobalContext {
         crypto: Arc::new(CryptoNative),
@@ -80,7 +104,7 @@ async fn workbench(config_path: Option<PathBuf>, debug: bool) -> Result<(), Conf
     });
 
     run_async! {
-        let runtime = create_runtime_with_config(config_path, debug).await?;
+        let runtime = create_runtime_with_config(config_path, debug, false).await?;
         workbench::start_workbench(runtime).await?;
 
         Ok(())
