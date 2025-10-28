@@ -1,16 +1,21 @@
 mod utils;
+mod type_hint_collector;
+mod variable_declaration_finder;
 
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use datex_core::ast::tree::{DatexExpression, DatexExpressionData, SimpleSpan, VariableAccess, VariableAssignment, VariableDeclaration};
+use datex_core::ast::data::expression::{DatexExpressionData, VariableAccess, VariableAssignment, VariableDeclaration};
+use datex_core::ast::data::visitor::Visit;
 use datex_core::compiler::error::CompilerError;
+use datex_core::compiler::precompiler::RichAst;
 use datex_core::compiler::workspace::CompilerWorkspace;
 use datex_core::types::type_container::TypeContainer;
 use realhydroper_lsp::lsp_types::*;
 use realhydroper_lsp::{Client, LanguageServer};
-use realhydroper_lsp::jsonrpc::ErrorCode;
+use realhydroper_lsp::jsonrpc::{Error, ErrorCode};
+use crate::lsp::variable_declaration_finder::VariableDeclarationFinder;
 
 pub struct SpannedCompilerError {
     pub range: Range,
@@ -52,6 +57,12 @@ impl LanguageServer for LanguageServerBackend {
                         work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None }
                     }
                 )),
+                inlay_hint_provider: Some(OneOf::Left(true)),
+                document_link_provider: Some(DocumentLinkOptions {
+                    resolve_provider: Some(true),
+                    work_done_progress_options: Default::default(),
+                }),
+                definition_provider: Some(OneOf::Left(true)),
                 ..Default::default()
             },
             ..Default::default()
@@ -185,7 +196,67 @@ impl LanguageServer for LanguageServerBackend {
                 data: None
             })
         }
+    }
 
+    async fn inlay_hint(&self, params: InlayHintParams) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<InlayHint>>> {
+        // show type hints for variables
+        let type_hints = self
+            .get_type_hints(params.text_document.uri.to_file_path().unwrap())
+            .unwrap()
+            .into_iter()
+            .map(|hint| {
+                InlayHint {
+                    position: hint.0,
+                    label: InlayHintLabel::String(format!(": {}", hint.1.unwrap())),
+                    kind: Some(InlayHintKind::TYPE),
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(true),
+                    padding_right: None,
+                    data: None,
+                }
+            })
+            .collect();
+
+
+        Ok(Some(type_hints))
+    }
+
+
+    async fn goto_definition(&self, params: GotoDefinitionParams) -> realhydroper_lsp::jsonrpc::Result<Option<GotoDefinitionResponse>> {
+        let expression = self.get_expression_at_position(&params.text_document_position_params);
+        if let Some(expression) = expression {
+            match expression.data {
+                DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
+                    let uri = params.text_document_position_params.text_document.uri;
+                    let file_path = uri.to_file_path().unwrap();
+                    let workspace = self.compiler_workspace.borrow();
+                    let file = workspace.get_file(&file_path).unwrap();
+                    if let Some(RichAst {ast: Some(ast), ..}) = &file.rich_ast {
+                        let mut finder = VariableDeclarationFinder::new(id);
+                        finder.visit_expression(ast);
+                        Ok(
+                            finder.variable_declaration_position
+                                .map(|position| GotoDefinitionResponse::Scalar(
+                                    Location { uri, range: self.convert_byte_range_to_document_range(&position, &file.content)}
+                                ))
+                        )
+                    }
+                    else {
+                        Ok(None)
+                    }
+                }
+                _ => Ok(None)
+            }
+        }
+        else {
+            Err(Error::internal_error())
+        }
+    }
+
+    async fn document_link(&self, params: DocumentLinkParams) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<DocumentLink>>>  {
+       // TODO
+       Ok(Some(vec![]))
     }
 
     // get error diagnostics
