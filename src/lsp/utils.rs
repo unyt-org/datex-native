@@ -312,7 +312,7 @@ impl ExpressionFinder {
             }
             Ok(VisitAction::VisitChildren)
         } else {
-            Err(())
+            Ok(VisitAction::SkipChildren)
         }
     }
 }
