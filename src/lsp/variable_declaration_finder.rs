@@ -1,6 +1,8 @@
 use std::ops::Range;
-use datex_core::ast::data::expression::VariableDeclaration;
-use datex_core::ast::data::visitor::{Visit, Visitable};
+use datex_core::ast::structs::expression::{DatexExpression, VariableDeclaration};
+use datex_core::visitor::expression::ExpressionVisitor;
+use datex_core::visitor::type_expression::TypeExpressionVisitor;
+use datex_core::visitor::VisitAction;
 
 #[derive(Default)]
 pub struct VariableDeclarationFinder {
@@ -14,13 +16,17 @@ impl VariableDeclarationFinder {
     }
 }
 
-impl Visit for VariableDeclarationFinder {
-    fn visit_variable_declaration(&mut self, var_decl: &VariableDeclaration, span: &Range<usize>) {
+impl TypeExpressionVisitor<()> for VariableDeclarationFinder {}
+
+impl ExpressionVisitor<()> for VariableDeclarationFinder {
+    fn visit_variable_declaration(&mut self, var_decl: &mut VariableDeclaration, span: &Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
         if var_decl.id == Some(self.var_id) {
             self.variable_declaration_position = Some(span.clone());
+            // early abort
+            Err(())
         }
         else {
-            var_decl.visit_children_with(self);
+            Ok(VisitAction::VisitChildren)
         }
     }
 }

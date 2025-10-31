@@ -1,19 +1,24 @@
 use std::ops::Range;
-use datex_core::ast::binding::VariableId;
-use datex_core::ast::data::expression::VariableDeclaration;
-use datex_core::ast::data::visitor::{Visit, Visitable};
+use datex_core::ast::structs::expression::{DatexExpression, VariableDeclaration};
+use datex_core::ast::structs::VariableId;
+use datex_core::visitor::expression::ExpressionVisitor;
+use datex_core::visitor::type_expression::TypeExpressionVisitor;
+use datex_core::visitor::VisitAction;
 
 #[derive(Default)]
 pub struct TypeHintCollector {
     pub type_hints: Vec<(usize, VariableId)>
 }
 
-impl Visit for TypeHintCollector {
-    fn visit_variable_declaration(&mut self, var_decl: &VariableDeclaration, span: &Range<usize>) {
+impl TypeExpressionVisitor<()> for TypeHintCollector {}
+
+impl ExpressionVisitor<()> for TypeHintCollector {
+    fn visit_variable_declaration(&mut self, var_decl: &mut VariableDeclaration, span: &Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
         if var_decl.type_annotation.is_none() {
             let expr_start = var_decl.init_expression.span.start;
+            // TODO: improve
             self.type_hints.push((expr_start - 3, var_decl.id.unwrap()));
         }
-        var_decl.visit_children_with(self);
+        Ok(VisitAction::VisitChildren)
     }
 }

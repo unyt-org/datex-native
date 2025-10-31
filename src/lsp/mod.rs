@@ -6,12 +6,12 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use datex_core::ast::data::expression::{DatexExpressionData, VariableAccess, VariableAssignment, VariableDeclaration};
-use datex_core::ast::data::visitor::Visit;
+use datex_core::ast::structs::expression::{DatexExpressionData, VariableAccess, VariableAssignment, VariableDeclaration};
 use datex_core::compiler::error::CompilerError;
-use datex_core::compiler::precompiler::RichAst;
 use datex_core::compiler::workspace::CompilerWorkspace;
+use datex_core::precompiler::precompiled_ast::RichAst;
 use datex_core::types::type_container::TypeContainer;
+use datex_core::visitor::expression::ExpressionVisitor;
 use realhydroper_lsp::lsp_types::*;
 use realhydroper_lsp::{Client, LanguageServer};
 use realhydroper_lsp::jsonrpc::{Error, ErrorCode};
@@ -230,11 +230,11 @@ impl LanguageServer for LanguageServerBackend {
                 DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
                     let uri = params.text_document_position_params.text_document.uri;
                     let file_path = uri.to_file_path().unwrap();
-                    let workspace = self.compiler_workspace.borrow();
-                    let file = workspace.get_file(&file_path).unwrap();
-                    if let Some(RichAst {ast: Some(ast), ..}) = &file.rich_ast {
+                    let mut workspace = self.compiler_workspace.borrow_mut();
+                    let file = workspace.get_file_mut(&file_path).unwrap();
+                    if let Some(RichAst {ast: Some(ast), ..}) = &mut file.rich_ast {
                         let mut finder = VariableDeclarationFinder::new(id);
-                        finder.visit_expression(ast);
+                        finder.visit_datex_expression(ast);
                         Ok(
                             finder.variable_declaration_position
                                 .map(|position| GotoDefinitionResponse::Scalar(

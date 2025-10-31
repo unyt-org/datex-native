@@ -1,14 +1,16 @@
 use std::path::PathBuf;
-use datex_core::ast::data::expression::{DatexExpression, DatexExpressionData, List, Map, Statements, VariableAccess, VariableAssignment, VariableDeclaration};
-use datex_core::ast::data::visitor::{Visit, Visitable};
+use datex_core::ast::structs::expression::{DatexExpression, DatexExpressionData, List, Map, Statements, VariableAccess, VariableAssignment, VariableDeclaration};
 use datex_core::compiler::error::DetailedCompilerErrors;
-use datex_core::compiler::precompiler::{RichAst, VariableMetadata};
+use datex_core::precompiler::precompiled_ast::VariableMetadata;
 use datex_core::types::type_container::TypeContainer;
 use datex_core::values::core_values::decimal::Decimal;
 use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
 use datex_core::values::core_values::endpoint::Endpoint;
 use datex_core::values::core_values::integer::Integer;
 use datex_core::values::core_values::integer::typed_integer::TypedInteger;
+use datex_core::visitor::expression::ExpressionVisitor;
+use datex_core::visitor::type_expression::TypeExpressionVisitor;
+use datex_core::visitor::VisitAction;
 use realhydroper_lsp::lsp_types::{MessageType, Position, Range, TextDocumentPositionParams};
 use crate::lsp::{LanguageServerBackend, SpannedCompilerError};
 use crate::lsp::type_hint_collector::TypeHintCollector;
@@ -55,12 +57,12 @@ impl LanguageServerBackend {
     
     
     pub(crate) fn get_type_hints(&self, file_path: PathBuf) -> Option<Vec<(Position, Option<TypeContainer>)>> {
-        let workspace = self.compiler_workspace.borrow();
-        let file = workspace.get_file(&file_path).unwrap();
-        if let Some(rich_ast) = &file.rich_ast {
-            let ast = rich_ast.ast.as_ref().unwrap();
+        let mut workspace = self.compiler_workspace.borrow_mut();
+        let file = workspace.get_file_mut(&file_path).unwrap();
+        if let Some(rich_ast) = &mut file.rich_ast {
+            let ast = rich_ast.ast.as_mut().unwrap();
             let mut collector = TypeHintCollector::default();
-            collector.visit_expression(ast);
+            collector.visit_datex_expression(ast);
             Some(
                 collector
                     .type_hints
@@ -194,13 +196,19 @@ impl LanguageServerBackend {
     /// Retrieves the DatexExpression AST node at the given byte offset.
     pub fn get_expression_at_position(&self, position: &TextDocumentPositionParams) -> Option<DatexExpression> {
         let byte_offset = self.position_to_byte_offset(position);
-        let workspace = self.compiler_workspace.borrow();
+        let mut workspace = self.compiler_workspace.borrow_mut();
         let file_path = position.text_document.uri.to_file_path().unwrap();
-        if let Some(rich_ast) = &workspace.get_file(&file_path).unwrap().rich_ast {
-            let ast = rich_ast.ast.as_ref().unwrap();
+        if let Some(rich_ast) = &mut workspace.get_file_mut(&file_path).unwrap().rich_ast {
+            let ast = rich_ast.ast.as_mut().unwrap();
             let mut finder = ExpressionFinder::new(byte_offset);
-            finder.visit_expression(ast);
-            finder.found_expr
+            finder.visit_datex_expression(ast);
+            finder.found_expr.map(|e|
+                DatexExpression {
+                    span: e.1,
+                    data: e.0,
+                    wrapped: None
+                }
+            )
         }
         else {
             None
@@ -241,7 +249,7 @@ impl LanguageServerBackend {
 /// If multiple expressions contain the position, the one with the smallest span is chosen.
 struct ExpressionFinder {
     pub search_pos: usize,
-    pub found_expr: Option<DatexExpression>,
+    pub found_expr: Option<(DatexExpressionData, std::ops::Range<usize>)>,
 }
 
 impl ExpressionFinder {
@@ -256,149 +264,80 @@ impl ExpressionFinder {
     /// Checks if the given span includes the search position.
     /// If it does, updates found_expr if this expression is more specific (smaller span).
     /// Returns true if the span includes the search position, false otherwise.
-    fn match_span(&mut self, span: &std::ops::Range<usize>, expr: DatexExpression) -> bool {
+    fn match_span(&mut self, span: &std::ops::Range<usize>, expr_data: DatexExpressionData) -> Result<VisitAction<DatexExpression>, ()> {
         if span.start <= self.search_pos && self.search_pos <= span.end {
             // If we already found an expression, only replace it if this one is smaller (more specific)
-            if let Some(existing_expr) = &self.found_expr {
-                if (span.end - span.start) < (existing_expr.span.end - existing_expr.span.start) {
-                    self.found_expr = Some(expr);
+            if let Some((_, existing_expr_span)) = &self.found_expr {
+                if (span.end - span.start) < (existing_expr_span.end - existing_expr_span.start) {
+                    self.found_expr = Some((expr_data, span.clone()));
                 }
             } else {
-                self.found_expr = Some(expr);
+                self.found_expr = Some((expr_data, span.clone()));
             }
-            true
+            Ok(VisitAction::VisitChildren)
         }
         else {
-            false
+            Err(())
         }
     }
 }
 
-impl Visit for ExpressionFinder {
-    fn visit_statements(&mut self, stmts: &Statements, span: &std::ops::Range<usize>) {
-        if self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Statements(stmts.clone()),
-            span: span.clone(),
-            wrapped: None,
-        }) {
-            // Only visit children if the span matched, to find more specific expressions within
-            stmts.visit_children_with(self);
-        }
+impl TypeExpressionVisitor<()> for ExpressionFinder {}
+
+impl ExpressionVisitor<()> for ExpressionFinder {
+    fn visit_statements(&mut self, stmts: &mut Statements, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Statements(stmts.clone()))
     }
 
-    fn visit_variable_declaration(&mut self, var_decl: &VariableDeclaration, span: &std::ops::Range<usize>) {
-        if self.match_span(span, DatexExpression {
-            data: DatexExpressionData::VariableDeclaration(var_decl.clone()),
-            span: span.clone(),
-            wrapped: None,
-        }) {
-            // Also visit the init expression to find more specific expressions within it
-            self.visit_expression(&var_decl.init_expression);
-        }
+    fn visit_variable_declaration(&mut self, var_decl: &mut VariableDeclaration, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::VariableDeclaration(var_decl.clone()))
     }
 
-    fn visit_variable_assignment(&mut self, var_assign: &VariableAssignment, span: &std::ops::Range<usize>) {
-        if self.match_span(span, DatexExpression {
-            data: DatexExpressionData::VariableAssignment(var_assign.clone()),
-            span: span.clone(),
-            wrapped: None,
-        }) {
-            // Also visit the assigned expression to find more specific expressions within it
-            self.visit_expression(&var_assign.expression);
-        }
+    fn visit_variable_assignment(&mut self, var_assign: &mut VariableAssignment, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::VariableAssignment(var_assign.clone()))
     }
 
-    fn visit_variable_access(&mut self, var_access: &VariableAccess, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::VariableAccess(var_access.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_variable_access(&mut self, var_access: &mut VariableAccess, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::VariableAccess(var_access.clone()))
     }
 
-    fn visit_list(&mut self, list: &List, span: &std::ops::Range<usize>) {
-        if self.match_span(span, DatexExpression {
-            data: DatexExpressionData::List(list.clone()),
-            span: span.clone(),
-            wrapped: None,
-        }) {
-            // Also visit the assigned expression to find more specific expressions within it
-            list.visit_children_with(self);
-        }
+    fn visit_list(&mut self, list: &mut List, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+         self.match_span(span, DatexExpressionData::List(list.clone()))
     }
 
-    fn visit_map(&mut self, map: &Map, span: &std::ops::Range<usize>) {
-        if self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Map(map.clone()),
-            span: span.clone(),
-            wrapped: None,
-        }) {
-            // Also visit the assigned expression to find more specific expressions within it
-            map.visit_children_with(self);
-        }
+    fn visit_map(&mut self, map: &mut Map, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+         self.match_span(span, DatexExpressionData::Map(map.clone()))
     }
 
-    fn visit_integer(&mut self, value: &Integer, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Integer(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_integer(&mut self, value: &mut Integer, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Integer(value.clone()))
     }
 
-    fn visit_typed_integer(&mut self, value: &TypedInteger, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::TypedInteger(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_typed_integer(&mut self, value: &mut TypedInteger, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::TypedInteger(value.clone()))
     }
 
-    fn visit_decimal(&mut self, value: &Decimal, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Decimal(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_decimal(&mut self, value: &mut Decimal, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Decimal(value.clone()))
     }
 
-    fn visit_typed_decimal(&mut self, value: &TypedDecimal, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::TypedDecimal(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_typed_decimal(&mut self, value: &mut TypedDecimal, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::TypedDecimal(value.clone()))
     }
 
-    fn visit_text(&mut self, value: &String, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Text(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_text(&mut self, value: &mut String, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Text(value.clone()))
     }
 
-    fn visit_boolean(&mut self, value: &bool, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Boolean(*value),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_boolean(&mut self, value: &mut bool, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Boolean(*value))
     }
 
-    fn visit_endpoint(&mut self, value: &Endpoint, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Endpoint(value.clone()),
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_endpoint(&mut self, value: &mut Endpoint, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Endpoint(value.clone()))
     }
 
-    fn visit_null(&mut self, span: &std::ops::Range<usize>) {
-        self.match_span(span, DatexExpression {
-            data: DatexExpressionData::Null,
-            span: span.clone(),
-            wrapped: None,
-        });
+    fn visit_null(&mut self, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Null)
     }
 }
