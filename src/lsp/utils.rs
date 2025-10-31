@@ -90,7 +90,7 @@ impl LanguageServerBackend {
     /// Recursively collects spanned compiler errors into the spanned_compiler_errors field.
     fn collect_compiler_errors(&self, errors: &DetailedCompilerErrors, path: PathBuf, file_content: &String) {
         let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
-        let file_errors = spanned_compiler_errors.entry(path.clone()).or_insert_with(Vec::new);
+        let file_errors = spanned_compiler_errors.entry(path.clone()).or_default();
 
         for error in &errors.errors {
             let range = error.span.as_ref().map(|span| {
