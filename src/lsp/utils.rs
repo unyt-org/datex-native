@@ -1,5 +1,9 @@
-use std::path::PathBuf;
-use datex_core::ast::structs::expression::{DatexExpression, DatexExpressionData, List, Map, Statements, VariableAccess, VariableAssignment, VariableDeclaration};
+use crate::lsp::type_hint_collector::TypeHintCollector;
+use crate::lsp::{LanguageServerBackend, SpannedCompilerError};
+use datex_core::ast::structs::expression::{
+    DatexExpression, DatexExpressionData, List, Map, Statements, VariableAccess,
+    VariableAssignment, VariableDeclaration,
+};
 use datex_core::compiler::error::DetailedCompilerErrors;
 use datex_core::precompiler::precompiled_ast::VariableMetadata;
 use datex_core::types::type_container::TypeContainer;
@@ -8,20 +12,14 @@ use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
 use datex_core::values::core_values::endpoint::Endpoint;
 use datex_core::values::core_values::integer::Integer;
 use datex_core::values::core_values::integer::typed_integer::TypedInteger;
+use datex_core::visitor::VisitAction;
 use datex_core::visitor::expression::ExpressionVisitor;
 use datex_core::visitor::type_expression::TypeExpressionVisitor;
-use datex_core::visitor::VisitAction;
 use realhydroper_lsp::lsp_types::{MessageType, Position, Range, TextDocumentPositionParams};
-use crate::lsp::{LanguageServerBackend, SpannedCompilerError};
-use crate::lsp::type_hint_collector::TypeHintCollector;
+use std::path::PathBuf;
 
 impl LanguageServerBackend {
-
-    pub async fn update_file_contents(
-        &self,
-        path: PathBuf,
-        content: String,
-    ) {
+    pub async fn update_file_contents(&self, path: PathBuf, content: String) {
         let mut compiler_workspace = self.compiler_workspace.borrow_mut();
         let file = compiler_workspace.load_file(path.clone(), content.clone());
         // Clear previous errors for this file
@@ -41,22 +39,21 @@ impl LanguageServerBackend {
         }
         if let Some(rich_ast) = &file.rich_ast {
             self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("AST: {:#?}", rich_ast.ast),
-                )
+                .log_message(MessageType::INFO, format!("AST: {:#?}", rich_ast.ast))
                 .await;
             self.client
                 .log_message(
                     MessageType::INFO,
-                    format!("AST metadata: {:#?}", *rich_ast.metadata.borrow())
+                    format!("AST metadata: {:#?}", *rich_ast.metadata.borrow()),
                 )
                 .await;
         }
     }
-    
-    
-    pub(crate) fn get_type_hints(&self, file_path: PathBuf) -> Option<Vec<(Position, Option<TypeContainer>)>> {
+
+    pub(crate) fn get_type_hints(
+        &self,
+        file_path: PathBuf,
+    ) -> Option<Vec<(Position, Option<TypeContainer>)>> {
         let mut workspace = self.compiler_workspace.borrow_mut();
         let file = workspace.get_file_mut(&file_path).unwrap();
         if let Some(rich_ast) = &mut file.rich_ast {
@@ -67,16 +64,22 @@ impl LanguageServerBackend {
                 collector
                     .type_hints
                     .into_iter()
-                    .map(|hint|
+                    .map(|hint| {
                         (
                             self.byte_offset_to_position(hint.0, &file.content).unwrap(),
-                            rich_ast.metadata.borrow().variables.get(hint.1).unwrap().var_type.clone()
+                            rich_ast
+                                .metadata
+                                .borrow()
+                                .variables
+                                .get(hint.1)
+                                .unwrap()
+                                .var_type
+                                .clone(),
                         )
-                    )
-                    .collect()
+                    })
+                    .collect(),
             )
-        }
-        else {
+        } else {
             None
         }
     }
@@ -88,16 +91,26 @@ impl LanguageServerBackend {
     }
 
     /// Recursively collects spanned compiler errors into the spanned_compiler_errors field.
-    fn collect_compiler_errors(&self, errors: &DetailedCompilerErrors, path: PathBuf, file_content: &String) {
+    fn collect_compiler_errors(
+        &self,
+        errors: &DetailedCompilerErrors,
+        path: PathBuf,
+        file_content: &String,
+    ) {
         let mut spanned_compiler_errors = self.spanned_compiler_errors.borrow_mut();
         let file_errors = spanned_compiler_errors.entry(path.clone()).or_default();
 
         for error in &errors.errors {
-            let range = error.span.as_ref().map(|span| {
-                self.convert_byte_range_to_document_range(span, file_content)
-            }).unwrap_or_else(|| {
-                self.convert_byte_range_to_document_range(&(0..file_content.len()), file_content)
-            });
+            let range = error
+                .span
+                .as_ref()
+                .map(|span| self.convert_byte_range_to_document_range(span, file_content))
+                .unwrap_or_else(|| {
+                    self.convert_byte_range_to_document_range(
+                        &(0..file_content.len()),
+                        file_content,
+                    )
+                });
             file_errors.push(SpannedCompilerError {
                 range,
                 error: error.error.clone(),
@@ -132,7 +145,6 @@ impl LanguageServerBackend {
                     return Some(v);
                 }
             }
-
         }
         None
     }
@@ -145,25 +157,49 @@ impl LanguageServerBackend {
         let file_path = position.text_document.uri.to_file_path().unwrap();
         let file_content = &workspace.get_file(&file_path).unwrap().content;
 
-        Self::line_char_to_byte_index(file_content, position.position.line as usize, position.position.character as usize).unwrap_or(0)
+        Self::line_char_to_byte_index(
+            file_content,
+            position.position.line as usize,
+            position.position.character as usize,
+        )
+        .unwrap_or(0)
     }
 
     /// Converts a byte range (start, end) to a document Range (start Position, end Position) in the file content.
-    pub fn convert_byte_range_to_document_range(&self, span: &std::ops::Range<usize>, file_content: &String) -> Range {
-        let start = self.byte_offset_to_position(span.start, file_content).unwrap_or(Position { line: 0, character: 0 });
-        let end = self.byte_offset_to_position(span.end, file_content).unwrap_or(Position { line: 0, character: 0 });
+    pub fn convert_byte_range_to_document_range(
+        &self,
+        span: &std::ops::Range<usize>,
+        file_content: &String,
+    ) -> Range {
+        let start = self
+            .byte_offset_to_position(span.start, file_content)
+            .unwrap_or(Position {
+                line: 0,
+                character: 0,
+            });
+        let end = self
+            .byte_offset_to_position(span.end, file_content)
+            .unwrap_or(Position {
+                line: 0,
+                character: 0,
+            });
         Range { start, end }
     }
 
     /// Converts a byte offset to an LSP position (line and character) in the file content.
     /// TODO: check if this is correct, generated with copilot
-    pub fn byte_offset_to_position(&self, byte_offset: usize, file_content: &String) -> Option<Position> {
+    pub fn byte_offset_to_position(
+        &self,
+        byte_offset: usize,
+        file_content: &String,
+    ) -> Option<Position> {
         let mut current_offset = 0;
         for (line_idx, line) in file_content.lines().enumerate() {
             let line_length = line.len() + 1; // +1 for the newline character
             if current_offset + line_length > byte_offset {
                 // The byte offset is within this line
-                let char_offset = line.char_indices()
+                let char_offset = line
+                    .char_indices()
                     .find(|(i, _)| current_offset + i >= byte_offset)
                     .map(|(i, _)| i)
                     .unwrap_or(line.len());
@@ -194,7 +230,10 @@ impl LanguageServerBackend {
     }
 
     /// Retrieves the DatexExpression AST node at the given byte offset.
-    pub fn get_expression_at_position(&self, position: &TextDocumentPositionParams) -> Option<DatexExpression> {
+    pub fn get_expression_at_position(
+        &self,
+        position: &TextDocumentPositionParams,
+    ) -> Option<DatexExpression> {
         let byte_offset = self.position_to_byte_offset(position);
         let mut workspace = self.compiler_workspace.borrow_mut();
         let file_path = position.text_document.uri.to_file_path().unwrap();
@@ -202,20 +241,15 @@ impl LanguageServerBackend {
             let ast = rich_ast.ast.as_mut().unwrap();
             let mut finder = ExpressionFinder::new(byte_offset);
             finder.visit_datex_expression(ast);
-            finder.found_expr.map(|e|
-                DatexExpression {
-                    span: e.1,
-                    data: e.0,
-                    wrapped: None
-                }
-            )
-        }
-        else {
+            finder.found_expr.map(|e| DatexExpression {
+                span: e.1,
+                data: e.0,
+                wrapped: None,
+            })
+        } else {
             None
         }
-
     }
-
 
     /// Converts a (line, character) pair to a byte index in the given text.
     /// Lines and characters are zero-indexed.
@@ -244,7 +278,6 @@ impl LanguageServerBackend {
     }
 }
 
-
 /// Visitor that finds the most specific DatexExpression containing a given byte position.
 /// If multiple expressions contain the position, the one with the smallest span is chosen.
 struct ExpressionFinder {
@@ -260,11 +293,14 @@ impl ExpressionFinder {
         }
     }
 
-
     /// Checks if the given span includes the search position.
     /// If it does, updates found_expr if this expression is more specific (smaller span).
     /// Returns true if the span includes the search position, false otherwise.
-    fn match_span(&mut self, span: &std::ops::Range<usize>, expr_data: DatexExpressionData) -> Result<VisitAction<DatexExpression>, ()> {
+    fn match_span(
+        &mut self,
+        span: &std::ops::Range<usize>,
+        expr_data: DatexExpressionData,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         if span.start <= self.search_pos && self.search_pos <= span.end {
             // If we already found an expression, only replace it if this one is smaller (more specific)
             if let Some((_, existing_expr_span)) = &self.found_expr {
@@ -275,8 +311,7 @@ impl ExpressionFinder {
                 self.found_expr = Some((expr_data, span.clone()));
             }
             Ok(VisitAction::VisitChildren)
-        }
-        else {
+        } else {
             Err(())
         }
     }
@@ -285,59 +320,123 @@ impl ExpressionFinder {
 impl TypeExpressionVisitor<()> for ExpressionFinder {}
 
 impl ExpressionVisitor<()> for ExpressionFinder {
-    fn visit_statements(&mut self, stmts: &mut Statements, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_statements(
+        &mut self,
+        stmts: &mut Statements,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Statements(stmts.clone()))
     }
 
-    fn visit_variable_declaration(&mut self, var_decl: &mut VariableDeclaration, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
-        self.match_span(span, DatexExpressionData::VariableDeclaration(var_decl.clone()))
+    fn visit_variable_declaration(
+        &mut self,
+        var_decl: &mut VariableDeclaration,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(
+            span,
+            DatexExpressionData::VariableDeclaration(var_decl.clone()),
+        )
     }
 
-    fn visit_variable_assignment(&mut self, var_assign: &mut VariableAssignment, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
-        self.match_span(span, DatexExpressionData::VariableAssignment(var_assign.clone()))
+    fn visit_variable_assignment(
+        &mut self,
+        var_assign: &mut VariableAssignment,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(
+            span,
+            DatexExpressionData::VariableAssignment(var_assign.clone()),
+        )
     }
 
-    fn visit_variable_access(&mut self, var_access: &mut VariableAccess, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
-        self.match_span(span, DatexExpressionData::VariableAccess(var_access.clone()))
+    fn visit_variable_access(
+        &mut self,
+        var_access: &mut VariableAccess,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(
+            span,
+            DatexExpressionData::VariableAccess(var_access.clone()),
+        )
     }
 
-    fn visit_list(&mut self, list: &mut List, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
-         self.match_span(span, DatexExpressionData::List(list.clone()))
+    fn visit_list(
+        &mut self,
+        list: &mut List,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::List(list.clone()))
     }
 
-    fn visit_map(&mut self, map: &mut Map, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
-         self.match_span(span, DatexExpressionData::Map(map.clone()))
+    fn visit_map(
+        &mut self,
+        map: &mut Map,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
+        self.match_span(span, DatexExpressionData::Map(map.clone()))
     }
 
-    fn visit_integer(&mut self, value: &mut Integer, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_integer(
+        &mut self,
+        value: &mut Integer,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Integer(value.clone()))
     }
 
-    fn visit_typed_integer(&mut self, value: &mut TypedInteger, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_typed_integer(
+        &mut self,
+        value: &mut TypedInteger,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::TypedInteger(value.clone()))
     }
 
-    fn visit_decimal(&mut self, value: &mut Decimal, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_decimal(
+        &mut self,
+        value: &mut Decimal,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Decimal(value.clone()))
     }
 
-    fn visit_typed_decimal(&mut self, value: &mut TypedDecimal, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_typed_decimal(
+        &mut self,
+        value: &mut TypedDecimal,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::TypedDecimal(value.clone()))
     }
 
-    fn visit_text(&mut self, value: &mut String, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_text(
+        &mut self,
+        value: &mut String,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Text(value.clone()))
     }
 
-    fn visit_boolean(&mut self, value: &mut bool, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_boolean(
+        &mut self,
+        value: &mut bool,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Boolean(*value))
     }
 
-    fn visit_endpoint(&mut self, value: &mut Endpoint, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_endpoint(
+        &mut self,
+        value: &mut Endpoint,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Endpoint(value.clone()))
     }
 
-    fn visit_null(&mut self, span: &std::ops::Range<usize>) -> Result<VisitAction<DatexExpression>, ()> {
+    fn visit_null(
+        &mut self,
+        span: &std::ops::Range<usize>,
+    ) -> Result<VisitAction<DatexExpression>, ()> {
         self.match_span(span, DatexExpressionData::Null)
     }
 }

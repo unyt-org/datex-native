@@ -1,13 +1,13 @@
+use datex_core::compiler::workspace::CompilerWorkspace;
 use datex_core::crypto::crypto_native::CryptoNative;
+use datex_core::decompiler::{DecompileOptions, decompile_value};
 use datex_core::run_async;
 use datex_core::runtime::global_context::{DebugFlags, GlobalContext, set_global_context};
 use datex_core::runtime::{Runtime, RuntimeConfig};
 use datex_core::utils::time_native::TimeNative;
+use datex_core::values::core_values::endpoint::Endpoint;
 use std::path::PathBuf;
 use std::sync::Arc;
-use datex_core::compiler::workspace::CompilerWorkspace;
-use datex_core::decompiler::{decompile_value, DecompileOptions};
-use datex_core::values::core_values::endpoint::Endpoint;
 
 mod command_line_args;
 mod lsp;
@@ -31,8 +31,7 @@ async fn main() {
         println!("datex-cli {}", env!("CARGO_PKG_VERSION"));
         println!("datex {}", env!("DEP_DATEX_CORE_VERSION"));
         return;
-    }
-    else {
+    } else {
         command.command
     };
 
@@ -45,7 +44,9 @@ async fn main() {
                 let runtime = Runtime::new(RuntimeConfig::new_with_endpoint(Endpoint::default()));
                 let compiler_workspace = CompilerWorkspace::new(runtime);
 
-                let (service, socket) = LspService::new(|client| LanguageServerBackend::new(client, compiler_workspace));
+                let (service, socket) = LspService::new(|client| {
+                    LanguageServerBackend::new(client, compiler_workspace)
+                });
                 Server::new(stdin, stdout, socket).serve(service).await;
             }
             Subcommands::Run(run) => {

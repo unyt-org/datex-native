@@ -1,21 +1,23 @@
-mod utils;
 mod type_hint_collector;
+mod utils;
 mod variable_declaration_finder;
 
-use std::borrow::Cow;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use datex_core::ast::structs::expression::{DatexExpressionData, VariableAccess, VariableAssignment, VariableDeclaration};
+use crate::lsp::variable_declaration_finder::VariableDeclarationFinder;
+use datex_core::ast::structs::expression::{
+    DatexExpressionData, VariableAccess, VariableAssignment, VariableDeclaration,
+};
 use datex_core::compiler::error::CompilerError;
 use datex_core::compiler::workspace::CompilerWorkspace;
 use datex_core::precompiler::precompiled_ast::RichAst;
 use datex_core::types::type_container::TypeContainer;
 use datex_core::visitor::expression::ExpressionVisitor;
+use realhydroper_lsp::jsonrpc::{Error, ErrorCode};
 use realhydroper_lsp::lsp_types::*;
 use realhydroper_lsp::{Client, LanguageServer};
-use realhydroper_lsp::jsonrpc::{Error, ErrorCode};
-use crate::lsp::variable_declaration_finder::VariableDeclarationFinder;
+use std::borrow::Cow;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub struct SpannedCompilerError {
     pub range: Range,
@@ -38,10 +40,12 @@ impl LanguageServerBackend {
     }
 }
 
-
 #[realhydroper_lsp::async_trait(?Send)]
 impl LanguageServer for LanguageServerBackend {
-    async fn initialize(&self, _: InitializeParams) -> realhydroper_lsp::jsonrpc::Result<InitializeResult> {
+    async fn initialize(
+        &self,
+        _: InitializeParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<InitializeResult> {
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
@@ -54,8 +58,10 @@ impl LanguageServer for LanguageServerBackend {
                         inter_file_dependencies: true,
                         workspace_diagnostics: false,
                         identifier: None,
-                        work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None }
-                    }
+                        work_done_progress_options: WorkDoneProgressOptions {
+                            work_done_progress: None,
+                        },
+                    },
                 )),
                 inlay_hint_provider: Some(OneOf::Left(true)),
                 document_link_provider: Some(DocumentLinkOptions {
@@ -90,7 +96,8 @@ impl LanguageServer for LanguageServerBackend {
         self.update_file_contents(
             params.text_document.uri.to_file_path().unwrap(),
             params.text_document.text,
-        ).await;
+        )
+        .await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
@@ -100,14 +107,23 @@ impl LanguageServer for LanguageServerBackend {
                 format!("File changed: {}", params.text_document.uri),
             )
             .await;
-        let new_content = params.content_changes.into_iter().next().map(|change| change.text).unwrap_or_default();
+        let new_content = params
+            .content_changes
+            .into_iter()
+            .next()
+            .map(|change| change.text)
+            .unwrap_or_default();
         self.update_file_contents(
             params.text_document.uri.to_file_path().unwrap(),
             new_content,
-        ).await;
+        )
+        .await;
     }
 
-    async fn completion(&self, params: CompletionParams) -> realhydroper_lsp::jsonrpc::Result<Option<CompletionResponse>> {
+    async fn completion(
+        &self,
+        params: CompletionParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<Option<CompletionResponse>> {
         self.client
             .log_message(MessageType::INFO, "completion!")
             .await;
@@ -123,24 +139,24 @@ impl LanguageServer for LanguageServerBackend {
 
         let variables = self.find_variable_starting_with(&prefix);
 
-        let items: Vec<CompletionItem> = variables.iter().map(|var| {
-            CompletionItem {
+        let items: Vec<CompletionItem> = variables
+            .iter()
+            .map(|var| CompletionItem {
                 label: var.name.clone(),
                 kind: Some(CompletionItemKind::VARIABLE),
                 detail: Some(format!(
                     "{} {}: {}",
                     var.shape,
                     var.name,
-                    var.var_type.as_ref().unwrap())
-                ),
+                    var.var_type.as_ref().unwrap()
+                )),
                 documentation: None,
                 ..Default::default()
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(Some(CompletionResponse::Array(items)))
     }
-
 
     async fn hover(&self, params: HoverParams) -> realhydroper_lsp::jsonrpc::Result<Option<Hover>> {
         let expression = self.get_expression_at_position(&params.text_document_position_params);
@@ -148,9 +164,17 @@ impl LanguageServer for LanguageServerBackend {
         if let Some(expression) = expression {
             Ok(match expression.data {
                 // show variable type info on hover
-                DatexExpressionData::VariableDeclaration(VariableDeclaration { name, id: Some(id), .. }) |
-                DatexExpressionData::VariableAssignment(VariableAssignment { name, id: Some(id), .. }) |
-                DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
+                DatexExpressionData::VariableDeclaration(VariableDeclaration {
+                    name,
+                    id: Some(id),
+                    ..
+                })
+                | DatexExpressionData::VariableAssignment(VariableAssignment {
+                    name,
+                    id: Some(id),
+                    ..
+                })
+                | DatexExpressionData::VariableAccess(VariableAccess { id, name }) => {
                     let variable_metadata = self.get_variable_by_id(id).unwrap();
                     Some(self.get_language_string_hover(&format!(
                         "{} {}: {}",
@@ -163,67 +187,66 @@ impl LanguageServer for LanguageServerBackend {
                 // show value info on hover for literals
                 DatexExpressionData::Integer(integer) => {
                     Some(self.get_language_string_hover(&format!("{}", integer)))
-                },
+                }
                 DatexExpressionData::TypedInteger(typed_integer) => {
                     Some(self.get_language_string_hover(&format!("{}", typed_integer)))
-                },
+                }
                 DatexExpressionData::Decimal(decimal) => {
                     Some(self.get_language_string_hover(&format!("{}", decimal)))
-                },
+                }
                 DatexExpressionData::TypedDecimal(typed_decimal) => {
                     Some(self.get_language_string_hover(&format!("{}", typed_decimal)))
-                },
+                }
                 DatexExpressionData::Boolean(boolean) => {
                     Some(self.get_language_string_hover(&format!("{}", boolean)))
-                },
+                }
                 DatexExpressionData::Text(text) => {
                     Some(self.get_language_string_hover(&format!("\"{}\"", text)))
-                },
+                }
                 DatexExpressionData::Endpoint(endpoint) => {
                     Some(self.get_language_string_hover(&format!("{}", endpoint)))
-                },
-                DatexExpressionData::Null => {
-                    Some(self.get_language_string_hover("null"))
-                },
+                }
+                DatexExpressionData::Null => Some(self.get_language_string_hover("null")),
 
                 _ => None,
             })
-        }
-        else {
+        } else {
             Err(realhydroper_lsp::jsonrpc::Error {
                 code: ErrorCode::ParseError,
                 message: Cow::from("No AST available"),
-                data: None
+                data: None,
             })
         }
     }
 
-    async fn inlay_hint(&self, params: InlayHintParams) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<InlayHint>>> {
+    async fn inlay_hint(
+        &self,
+        params: InlayHintParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<InlayHint>>> {
         // show type hints for variables
         let type_hints = self
             .get_type_hints(params.text_document.uri.to_file_path().unwrap())
             .unwrap()
             .into_iter()
-            .map(|hint| {
-                InlayHint {
-                    position: hint.0,
-                    label: InlayHintLabel::String(format!(": {}", hint.1.unwrap())),
-                    kind: Some(InlayHintKind::TYPE),
-                    text_edits: None,
-                    tooltip: None,
-                    padding_left: Some(true),
-                    padding_right: None,
-                    data: None,
-                }
+            .map(|hint| InlayHint {
+                position: hint.0,
+                label: InlayHintLabel::String(format!(": {}", hint.1.unwrap())),
+                kind: Some(InlayHintKind::TYPE),
+                text_edits: None,
+                tooltip: None,
+                padding_left: Some(true),
+                padding_right: None,
+                data: None,
             })
             .collect();
-
 
         Ok(Some(type_hints))
     }
 
-
-    async fn goto_definition(&self, params: GotoDefinitionParams) -> realhydroper_lsp::jsonrpc::Result<Option<GotoDefinitionResponse>> {
+    async fn goto_definition(
+        &self,
+        params: GotoDefinitionParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<Option<GotoDefinitionResponse>> {
         let expression = self.get_expression_at_position(&params.text_document_position_params);
         if let Some(expression) = expression {
             match expression.data {
@@ -232,36 +255,40 @@ impl LanguageServer for LanguageServerBackend {
                     let file_path = uri.to_file_path().unwrap();
                     let mut workspace = self.compiler_workspace.borrow_mut();
                     let file = workspace.get_file_mut(&file_path).unwrap();
-                    if let Some(RichAst {ast: Some(ast), ..}) = &mut file.rich_ast {
+                    if let Some(RichAst { ast: Some(ast), .. }) = &mut file.rich_ast {
                         let mut finder = VariableDeclarationFinder::new(id);
                         finder.visit_datex_expression(ast);
-                        Ok(
-                            finder.variable_declaration_position
-                                .map(|position| GotoDefinitionResponse::Scalar(
-                                    Location { uri, range: self.convert_byte_range_to_document_range(&position, &file.content)}
-                                ))
-                        )
-                    }
-                    else {
+                        Ok(finder.variable_declaration_position.map(|position| {
+                            GotoDefinitionResponse::Scalar(Location {
+                                uri,
+                                range: self
+                                    .convert_byte_range_to_document_range(&position, &file.content),
+                            })
+                        }))
+                    } else {
                         Ok(None)
                     }
                 }
-                _ => Ok(None)
+                _ => Ok(None),
             }
-        }
-        else {
+        } else {
             Err(Error::internal_error())
         }
     }
 
-    async fn document_link(&self, params: DocumentLinkParams) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<DocumentLink>>>  {
-       // TODO
-       Ok(Some(vec![]))
+    async fn document_link(
+        &self,
+        params: DocumentLinkParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<Option<Vec<DocumentLink>>> {
+        // TODO
+        Ok(Some(vec![]))
     }
 
     // get error diagnostics
-    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> realhydroper_lsp::jsonrpc::Result<DocumentDiagnosticReportResult>
-    {
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> realhydroper_lsp::jsonrpc::Result<DocumentDiagnosticReportResult> {
         self.client
             .log_message(MessageType::INFO, "diagnostics!")
             .await;
@@ -279,11 +306,10 @@ impl LanguageServer for LanguageServerBackend {
             DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
                 related_documents: None,
                 full_document_diagnostic_report: report,
-            }))
-        )
+            }),
+        ))
     }
 }
-
 
 impl LanguageServerBackend {
     fn get_language_string_hover(&self, text: &str) -> Hover {
@@ -291,7 +317,10 @@ impl LanguageServerBackend {
             language: "datex".to_string(),
             value: text.to_string(),
         }));
-        Hover { contents, range: None }
+        Hover {
+            contents,
+            range: None,
+        }
     }
 
     fn get_diagnostics_for_file(&self, file_path: &std::path::Path) -> Vec<Diagnostic> {

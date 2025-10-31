@@ -1,4 +1,4 @@
-use crate::utils::config::{create_runtime_with_config, ConfigError};
+use crate::utils::config::{ConfigError, create_runtime_with_config};
 use datex_core::crypto::crypto_native::CryptoNative;
 use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value};
 use datex_core::run_async;
