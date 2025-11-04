@@ -8,7 +8,7 @@ use datex_core::ast::structs::expression::{
 };
 use datex_core::compiler::error::CompilerError;
 use datex_core::compiler::workspace::CompilerWorkspace;
-use datex_core::precompiler::precompiled_ast::RichAst;
+use datex_core::compiler::precompiler::precompiled_ast::RichAst;
 use datex_core::types::type_container::TypeContainer;
 use datex_core::visitor::expression::ExpressionVisitor;
 use realhydroper_lsp::jsonrpc::{Error, ErrorCode};

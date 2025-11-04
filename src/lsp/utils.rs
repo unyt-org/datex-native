@@ -5,7 +5,7 @@ use datex_core::ast::structs::expression::{
     VariableAssignment, VariableDeclaration,
 };
 use datex_core::compiler::error::DetailedCompilerErrors;
-use datex_core::precompiler::precompiled_ast::VariableMetadata;
+use datex_core::compiler::precompiler::precompiled_ast::VariableMetadata;
 use datex_core::types::type_container::TypeContainer;
 use datex_core::values::core_values::decimal::Decimal;
 use datex_core::values::core_values::decimal::typed_decimal::TypedDecimal;
