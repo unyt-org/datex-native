@@ -822,7 +822,6 @@ dependencies = [
  "chumsky",
  "datex_macros",
  "flexi_logger",
- "foldhash 0.2.0",
  "futures",
  "futures-core",
  "futures-util",
@@ -836,7 +835,6 @@ dependencies = [
  "logos",
  "modular-bitfield",
  "mopa",
- "nostd",
  "num",
  "num-bigint",
  "num-integer",
@@ -852,7 +850,6 @@ dependencies = [
  "serde_json",
  "serde_with",
  "serialport",
- "spin",
  "strum 0.27.2",
  "strum_macros 0.27.2",
  "syntect",
@@ -1114,12 +1111,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
 
 [[package]]
-name = "foldhash"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
-
-[[package]]
 name = "foreign-types"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1332,7 +1323,7 @@ checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
  "allocator-api2",
  "equivalent",
- "foldhash 0.1.5",
+ "foldhash",
 ]
 
 [[package]]
@@ -2036,17 +2027,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nostd"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a02781f0897bf3bead576425bbceac9d61ffc7e4696593860e365c8ca941c870"
-dependencies = [
- "hashbrown 0.15.5",
- "memchr",
- "rustversion",
-]
-
-[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2132,7 +2112,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
- "libm",
 ]
 
 [[package]]
@@ -3200,15 +3179,6 @@ checksum = "17129e116933cf371d018bb80ae557e889637989d8638274fb25622827b03881"
 dependencies = [
  "libc",
  "windows-sys 0.60.2",
-]
-
-[[package]]
-name = "spin"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5fe4ccb98d9c292d56fec89a5e07da7fc4cf0dc11e156b41793132775d3e591"
-dependencies = [
- "lock_api",
 ]
 
 [[package]]

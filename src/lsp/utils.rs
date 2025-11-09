@@ -57,7 +57,7 @@ impl LanguageServerBackend {
         let mut workspace = self.compiler_workspace.borrow_mut();
         let file = workspace.get_file_mut(&file_path).unwrap();
         if let Some(rich_ast) = &mut file.rich_ast {
-            let ast = rich_ast.ast.as_mut().unwrap();
+            let ast = &mut rich_ast.ast;
             let mut collector = TypeHintCollector::default();
             collector.visit_datex_expression(ast);
             Some(
@@ -238,13 +238,14 @@ impl LanguageServerBackend {
         let mut workspace = self.compiler_workspace.borrow_mut();
         let file_path = position.text_document.uri.to_file_path().unwrap();
         if let Some(rich_ast) = &mut workspace.get_file_mut(&file_path).unwrap().rich_ast {
-            let ast = rich_ast.ast.as_mut().unwrap();
+            let ast = &mut rich_ast.ast;
             let mut finder = ExpressionFinder::new(byte_offset);
             finder.visit_datex_expression(ast);
             finder.found_expr.map(|e| DatexExpression {
                 span: e.1,
                 data: e.0,
                 wrapped: None,
+                ty: None,
             })
         } else {
             None

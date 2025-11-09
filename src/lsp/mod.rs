@@ -255,7 +255,7 @@ impl LanguageServer for LanguageServerBackend {
                     let file_path = uri.to_file_path().unwrap();
                     let mut workspace = self.compiler_workspace.borrow_mut();
                     let file = workspace.get_file_mut(&file_path).unwrap();
-                    if let Some(RichAst { ast: Some(ast), .. }) = &mut file.rich_ast {
+                    if let Some(RichAst { ast, .. }) = &mut file.rich_ast {
                         let mut finder = VariableDeclarationFinder::new(id);
                         finder.visit_datex_expression(ast);
                         Ok(finder.variable_declaration_position.map(|position| {
