@@ -674,9 +674,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
+checksum = "78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a"
 dependencies = [
  "generic-array",
  "rand_core",
@@ -810,7 +810,7 @@ checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 [[package]]
 name = "datex-core"
 version = "0.0.7"
-source = "git+https://github.com/unyt-org/datex-core?branch=release%2F0.0.7#f02cd8700d7ab8979eb55be925e3c95a3d313ee2"
+source = "git+https://github.com/unyt-org/datex-core?branch=feat%2Flsp#c560f3172113a16fcefb25e206a929d7ce0f9be4"
 dependencies = [
  "ariadne",
  "async-trait",
@@ -844,6 +844,7 @@ dependencies = [
  "ordered-float",
  "pretty",
  "rand",
+ "realhydroper-lsp",
  "ringmap",
  "serde",
  "serde-big-array",
@@ -885,7 +886,7 @@ dependencies = [
 [[package]]
 name = "datex_macros"
 version = "0.1.1"
-source = "git+https://github.com/unyt-org/datex-core?branch=release%2F0.0.7#f02cd8700d7ab8979eb55be925e3c95a3d313ee2"
+source = "git+https://github.com/unyt-org/datex-core?branch=feat%2Flsp#c560f3172113a16fcefb25e206a929d7ce0f9be4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1225,9 +1226,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.9"
+version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bb6743198531e02858aeaea5398fcc883e71851fcbcb5a2f773e2fb6cb1edf2"
+checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
  "typenum",
  "version_check",
@@ -4570,3 +4571,7 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[patch.unused]]
+name = "datex-core"
+version = "0.0.7"

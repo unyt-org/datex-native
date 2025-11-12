@@ -12,7 +12,7 @@ build = "build.rs"
 
 [dependencies]
 clap = { version = "4.0.23", features = ["derive"] }
-datex-core = { version = "0.0.7", git = "https://github.com/unyt-org/datex-core", branch = "release/0.0.7", features = [
+datex-core = { version = "0.0.7", git = "https://github.com/unyt-org/datex-core", branch = "feat/lsp", features = [
     "default",
     "debug",
 ] }

@@ -1,6 +1,7 @@
 use datex_core::compiler::workspace::CompilerWorkspace;
 use datex_core::crypto::crypto_native::CryptoNative;
 use datex_core::decompiler::{DecompileOptions, decompile_value};
+use datex_core::lsp::create_lsp;
 use datex_core::run_async;
 use datex_core::runtime::global_context::{DebugFlags, GlobalContext, set_global_context};
 use datex_core::runtime::{AsyncContext, Runtime, RuntimeConfig};
@@ -10,13 +11,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 mod command_line_args;
-mod lsp;
 mod repl;
 mod utils;
 mod workbench;
 
 use crate::command_line_args::Repl;
-use crate::lsp::LanguageServerBackend;
 use crate::repl::{ReplOptions, repl};
 use crate::utils::config::{ConfigError, create_runtime_with_config};
 use command_line_args::{Subcommands, get_command};
@@ -37,17 +36,15 @@ async fn main() {
 
     if let Some(cmd) = command {
         match cmd {
-            Subcommands::Lsp(lsp) => {
+            Subcommands::Lsp(_) => {
                 let stdin = tokio::io::stdin();
                 let stdout = tokio::io::stdout();
 
-                let runtime = Runtime::new(RuntimeConfig::new_with_endpoint(Endpoint::default()), AsyncContext::new());
-                let compiler_workspace = CompilerWorkspace::new(runtime);
-
-                let (service, socket) = LspService::new(|client| {
-                    LanguageServerBackend::new(client, compiler_workspace)
-                });
-                Server::new(stdin, stdout, socket).serve(service).await;
+                let runtime = Runtime::new(
+                    RuntimeConfig::new_with_endpoint(Endpoint::default()),
+                    AsyncContext::new(),
+                );
+                create_lsp(runtime, stdin, stdout).await;
             }
             Subcommands::Run(run) => {
                 execute_file(run).await;
