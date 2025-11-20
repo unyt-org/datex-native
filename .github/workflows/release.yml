@@ -43,7 +43,7 @@ jobs:
             ext: '.exe'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install libudev development package
         if: matrix.run_on == 'ubuntu-latest'
