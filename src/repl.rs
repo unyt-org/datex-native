@@ -2,7 +2,6 @@ use crate::utils::config::{ConfigError, create_runtime_with_config};
 use datex_core::crypto::crypto_native::CryptoNative;
 use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value};
 use datex_core::run_async;
-use datex_core::runtime::execution_context::{ExecutionContext, ScriptExecutionError};
 use datex_core::runtime::global_context::{GlobalContext, set_global_context};
 use datex_core::utils::time_native::TimeNative;
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -17,6 +16,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
+use datex_core::runtime::execution::context::{ExecutionContext, ExecutionMode, ScriptExecutionError};
 
 struct DatexSyntaxHelper;
 
@@ -114,9 +114,9 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
         // create context
         let mut execution_context = if options.verbose {
-            ExecutionContext::local_debug(false)
+            ExecutionContext::local_debug_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
         } else {
-            ExecutionContext::local()
+            ExecutionContext::local_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
         };
 
         while let Some(command) = cmd_receiver.recv().await {
