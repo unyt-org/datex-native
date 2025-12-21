@@ -828,6 +828,7 @@ dependencies = [
  "hex",
  "hyper",
  "indexmap 2.12.1",
+ "instant",
  "internment",
  "itertools 0.14.0",
  "log",
@@ -1637,6 +1638,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "instant"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]

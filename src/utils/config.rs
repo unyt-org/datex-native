@@ -1,4 +1,4 @@
-use datex_core::decompiler::{DecompileOptions, Formatting, decompile_value};
+use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions};
 use datex_core::network::com_interfaces::default_com_interfaces::websocket::websocket_common::WebSocketClientInterfaceSetupData;
 use datex_core::runtime::{Runtime, RuntimeConfig};
 use datex_core::serde::deserializer::DatexDeserializer;
@@ -8,6 +8,7 @@ use datex_core::values::core_values::endpoint::Endpoint;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -87,7 +88,7 @@ pub fn create_new_config_file(
     let datex_script = decompile_value(
         &config,
         DecompileOptions {
-            formatting: Formatting::multiline(),
+            formatting_options: FormattingOptions::default(),
             ..DecompileOptions::default()
         },
     );
