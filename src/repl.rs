@@ -17,6 +17,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
 use datex_core::runtime::execution::context::{ExecutionContext, ExecutionMode, ScriptExecutionError};
+use crate::utils::paths::get_datex_base_dir;
 
 struct DatexSyntaxHelper;
 
@@ -28,36 +29,6 @@ impl Highlighter for DatexSyntaxHelper {
         true
     }
 }
-
-// ref x = {}
-// val x = (1,2,3,r);
-// val y: ((string|decimal): number)  = ("sadf":234)
-// const val x = 10;
-// ref x = {};
-// x.a = 10;
-// ref y = (1,2,3); // Map
-// y.x = 10;
-// func (1,2,3)
-
-// ref weather: Weather;
-// weather = getWeatherFromApi(); -> val
-// weather = always cpnvertWearth(getWeatherFromApi()); -> indirect copy
-
-// ref user: User; <-- $user
-// #0 <- $user
-// for name in endpoint (
-//    user = resolveInner/innerRef/collapse/resolve getUserFromApi(name); $a -> $b -> $c;
-// )
-// user // <- $x
-// val x = 10;
-
-// ref x = weather;
-
-// (1: x) == ($(1): x, 1: x)
-// (val string: any)
-// {x: 1} == {0: x, (0min): 20m}
-// x.y  -> (y: 34)
-// x.({a}) -> ({a}: 4)
 
 impl Validator for DatexSyntaxHelper {
     fn validate(&self, ctx: &mut ValidationContext) -> rustyline::Result<ValidationResult> {
@@ -110,7 +81,7 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
     run_async! {
         let runtime = create_runtime_with_config(options.config_path, options.verbose, true).await?;
 
-        repl_loop(cmd_sender, response_receiver)?;
+        repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
         // create context
         let mut execution_context = if options.verbose {
@@ -203,8 +174,16 @@ enum ReplResponse {
 fn repl_loop(
     sender: tokio::sync::mpsc::Sender<ReplCommand>,
     mut receiver: tokio::sync::mpsc::Receiver<ReplResponse>,
+    datex_base_path: PathBuf,
 ) -> Result<(), ReplError> {
+
+    let mut history_cache_path = datex_base_path.clone();
+    history_cache_path.push("repl-history.txt");
+
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
+    if let Ok(_) = rl.load_history(&history_cache_path) {
+        println!("History restored");
+    }
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);
@@ -259,6 +238,9 @@ fn repl_loop(
                 }
             }
         }
+
+        // Save history on exit
+        rl.save_history(&history_cache_path).unwrap();
     });
 
     Ok(())
