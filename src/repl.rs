@@ -1,7 +1,13 @@
 use crate::utils::config::{ConfigError, create_runtime_with_config};
+use crate::utils::paths::get_datex_base_dir;
 use datex_core::crypto::crypto_native::CryptoNative;
-use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value, FormattingOptions, FormattingMode};
+use datex_core::decompiler::{
+    DecompileOptions, FormattingMode, FormattingOptions, apply_syntax_highlighting, decompile_value,
+};
 use datex_core::run_async;
+use datex_core::runtime::execution::context::{
+    ExecutionContext, ExecutionMode, ScriptExecutionError,
+};
 use datex_core::runtime::global_context::{GlobalContext, set_global_context};
 use datex_core::utils::time_native::TimeNative;
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -16,8 +22,6 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
-use datex_core::runtime::execution::context::{ExecutionContext, ExecutionMode, ScriptExecutionError};
-use crate::utils::paths::get_datex_base_dir;
 
 struct DatexSyntaxHelper;
 
@@ -184,14 +188,11 @@ fn repl_loop(
     mut receiver: tokio::sync::mpsc::Receiver<ReplResponse>,
     datex_base_path: PathBuf,
 ) -> Result<(), ReplError> {
-
     let mut history_cache_path = datex_base_path.clone();
     history_cache_path.push("repl-history.txt");
 
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
-    if let Ok(_) = rl.load_history(&history_cache_path) {
-        println!("History restored");
-    }
+    if let Ok(_) = rl.load_history(&history_cache_path) {}
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);
