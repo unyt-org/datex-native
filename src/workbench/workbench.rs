@@ -24,7 +24,7 @@ impl Workbench {
             runtime: runtime.clone(),
         };
         let comhub = ComHub {
-            runtime: runtime.clone()
+            runtime: runtime.clone(),
         };
 
         Workbench {
@@ -40,7 +40,7 @@ impl Workbench {
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events()?;
-            
+
             // // add ptr to the runtime
             // let id = random_bytes_slice::<26>();
             // runtime

@@ -1,12 +1,14 @@
-use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None, bin_name = "datex")]
-#[command(propagate_version = true)]
+#[command(disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
-    command: Option<Subcommands>,
+    pub command: Option<Subcommands>,
+    #[arg(short = 'V', long, help = "Print version")]
+    pub version: bool,
 }
 
 #[derive(Subcommand)]
@@ -20,6 +22,9 @@ pub enum Subcommands {
 #[derive(Args)]
 pub struct Run {
     pub file: Option<String>,
+    /// optional path to dx config file
+    #[arg(short, long)]
+    pub config: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -38,6 +43,6 @@ pub struct Repl {
 #[derive(Args)]
 pub struct Workbench {}
 
-pub fn get_command() -> Option<Subcommands> {
-    Cli::parse().command
+pub fn get_command() -> Cli {
+    Cli::parse()
 }

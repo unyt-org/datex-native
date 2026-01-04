@@ -1,4 +1,4 @@
-use datex_core::decompiler::{DecompileOptions, Formatting, decompile_value};
+use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions};
 use datex_core::network::com_interfaces::default_com_interfaces::websocket::websocket_common::WebSocketClientInterfaceSetupData;
 use datex_core::runtime::{Runtime, RuntimeConfig};
 use datex_core::serde::deserializer::DatexDeserializer;
@@ -8,6 +8,7 @@ use datex_core::values::core_values::endpoint::Endpoint;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -87,7 +88,7 @@ pub fn create_new_config_file(
     let datex_script = decompile_value(
         &config,
         DecompileOptions {
-            formatting: Formatting::multiline(),
+            formatting_options: FormattingOptions::default(),
             ..DecompileOptions::default()
         },
     );
@@ -129,6 +130,7 @@ pub fn get_config(custom_config_path: Option<PathBuf>) -> Result<RuntimeConfig, 
 pub async fn create_runtime_with_config(
     custom_config_path: Option<PathBuf>,
     force_debug: bool,
+    print_header: bool,
 ) -> Result<Runtime, ConfigError> {
     let mut config = get_config(custom_config_path)?;
     // overwrite debug mode if force_debug is true
@@ -137,14 +139,16 @@ pub async fn create_runtime_with_config(
     }
     let runtime = Runtime::create_native(config).await;
 
-    let cli_version = env!("CARGO_PKG_VERSION");
+    if print_header {
+        let cli_version = env!("CARGO_PKG_VERSION");
 
-    println!("================================================");
-    println!("DATEX REPL v{cli_version}");
-    println!("DATEX Core version: {}", runtime.version);
-    println!("Endpoint: {}", runtime.endpoint());
-    println!("\nexit using [CTRL + C]");
-    println!("================================================\n");
+        println!("================================================");
+        println!("DATEX REPL v{cli_version}");
+        println!("DATEX Core version: {}", runtime.version);
+        println!("Endpoint: {}", runtime.endpoint());
+        println!("\nexit using [CTRL + C]");
+        println!("================================================\n");
+    }
 
     Ok(runtime)
 }

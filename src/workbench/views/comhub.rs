@@ -59,7 +59,9 @@ impl Widget for &ComHub {
                     (match &socket.endpoint {
                         Some(endpoint) => endpoint.to_string(),
                         None => "unknown".to_string(),
-                    }).to_string().into(),
+                    })
+                    .to_string()
+                    .into(),
                 ]));
             }
         }

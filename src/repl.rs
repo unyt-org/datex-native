@@ -1,8 +1,13 @@
-use crate::utils::config::{create_runtime_with_config, ConfigError};
+use crate::utils::config::{ConfigError, create_runtime_with_config};
+use crate::utils::paths::get_datex_base_dir;
 use datex_core::crypto::crypto_native::CryptoNative;
-use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value};
+use datex_core::decompiler::{
+    DecompileOptions, FormattingMode, FormattingOptions, apply_syntax_highlighting, decompile_value,
+};
 use datex_core::run_async;
-use datex_core::runtime::execution_context::{ExecutionContext, ScriptExecutionError};
+use datex_core::runtime::execution::context::{
+    ExecutionContext, ExecutionMode, ScriptExecutionError,
+};
 use datex_core::runtime::global_context::{GlobalContext, set_global_context};
 use datex_core::utils::time_native::TimeNative;
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -28,36 +33,6 @@ impl Highlighter for DatexSyntaxHelper {
         true
     }
 }
-
-// ref x = {}
-// val x = (1,2,3,r);
-// val y: ((string|decimal): number)  = ("sadf":234)
-// const val x = 10;
-// ref x = {};
-// x.a = 10;
-// ref y = (1,2,3); // Map
-// y.x = 10;
-// func (1,2,3)
-
-// ref weather: Weather;
-// weather = getWeatherFromApi(); -> val
-// weather = always cpnvertWearth(getWeatherFromApi()); -> indirect copy
-
-// ref user: User; <-- $user
-// #0 <- $user
-// for name in endpoint (
-//    user = resolveInner/innerRef/collapse/resolve getUserFromApi(name); $a -> $b -> $c;
-// )
-// user // <- $x
-// val x = 10;
-
-// ref x = weather;
-
-// (1: x) == ($(1): x, 1: x)
-// (val string: any)
-// {x: 1} == {0: x, (0min): 20m}
-// x.y  -> (y: 34)
-// x.({a}) -> ({a}: 4)
 
 impl Validator for DatexSyntaxHelper {
     fn validate(&self, ctx: &mut ValidationContext) -> rustyline::Result<ValidationResult> {
@@ -108,15 +83,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
     run_async! {
-        let runtime = create_runtime_with_config(options.config_path, options.verbose).await?;
+        let runtime = create_runtime_with_config(options.config_path, options.verbose, true).await?;
 
-        repl_loop(cmd_sender, response_receiver)?;
+        repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
         // create context
         let mut execution_context = if options.verbose {
-            ExecutionContext::local_debug(false)
+            ExecutionContext::local_debug_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
         } else {
-            ExecutionContext::local()
+            ExecutionContext::local_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
         };
 
         while let Some(command) = cmd_receiver.recv().await {
@@ -165,7 +140,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                     }
 
                     else if let Some(result) = result.unwrap() {
-                        let decompiled_value = decompile_value(&result, DecompileOptions::colorized());
+                        let decompiled_value = decompile_value(&result, DecompileOptions {
+                            formatting_options: FormattingOptions {
+                                mode: FormattingMode::pretty(),
+                                json_compat: false,
+                                colorized: true,
+                                add_variant_suffix: true
+                            },
+                            resolve_slots: true,
+                        });
                         // indent all lines except the first with 2 spaces to match the REPL prompt indentation
                         let decompiled_value = decompiled_value.lines().enumerate().map(|(i, line)| {
                             if i == 0 {
@@ -203,8 +186,13 @@ enum ReplResponse {
 fn repl_loop(
     sender: tokio::sync::mpsc::Sender<ReplCommand>,
     mut receiver: tokio::sync::mpsc::Receiver<ReplResponse>,
+    datex_base_path: PathBuf,
 ) -> Result<(), ReplError> {
+    let mut history_cache_path = datex_base_path.clone();
+    history_cache_path.push("repl-history.txt");
+
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
+    if let Ok(_) = rl.load_history(&history_cache_path) {}
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);
@@ -259,6 +247,9 @@ fn repl_loop(
                 }
             }
         }
+
+        // Save history on exit
+        rl.save_history(&history_cache_path).unwrap();
     });
 
     Ok(())
