@@ -1,6 +1,6 @@
 use crate::utils::config::{ConfigError, create_runtime_with_config};
 use datex_core::crypto::crypto_native::CryptoNative;
-use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value};
+use datex_core::decompiler::{DecompileOptions, apply_syntax_highlighting, decompile_value, FormattingOptions, FormattingMode};
 use datex_core::run_async;
 use datex_core::runtime::global_context::{GlobalContext, set_global_context};
 use datex_core::utils::time_native::TimeNative;
@@ -136,7 +136,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                     }
 
                     else if let Some(result) = result.unwrap() {
-                        let decompiled_value = decompile_value(&result, DecompileOptions::colorized());
+                        let decompiled_value = decompile_value(&result, DecompileOptions {
+                            formatting_options: FormattingOptions {
+                                mode: FormattingMode::pretty(),
+                                json_compat: false,
+                                colorized: true,
+                                add_variant_suffix: true
+                            },
+                            resolve_slots: true,
+                        });
                         // indent all lines except the first with 2 spaces to match the REPL prompt indentation
                         let decompiled_value = decompiled_value.lines().enumerate().map(|(i, line)| {
                             if i == 0 {
