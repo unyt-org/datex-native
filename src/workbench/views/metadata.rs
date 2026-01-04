@@ -20,13 +20,15 @@ impl Widget for &Metadata {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White));
 
-
         let lines = vec![
             Line::from(vec![
                 "Endpoint: ".into(),
                 self.runtime.endpoint().to_string().bold(),
             ]),
-            Line::from(vec!["Version: ".into(), self.runtime.version.clone().bold()]),
+            Line::from(vec![
+                "Version: ".into(),
+                self.runtime.version.clone().bold(),
+            ]),
             // Line::from(vec![
             //     "Allocated pointers: ".into(),
             //     self.runtime
