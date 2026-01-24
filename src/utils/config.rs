@@ -36,6 +36,7 @@ impl From<std::io::Error> for ConfigError {
 }
 
 pub fn read_config_file(path: PathBuf) -> Result<RuntimeConfig, ConfigError> {
+    println!("Using config file {:?}", path);
     let config: RuntimeConfig = from_dx_file(path)?;
     Ok(config)
 }
