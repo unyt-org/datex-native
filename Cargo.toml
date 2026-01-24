@@ -12,7 +12,7 @@ build = "build.rs"
 
 [dependencies]
 clap = { version = "4.0.23", features = ["derive"] }
-datex-core = { version = "0.0.7", features = ["default", "debug"] }
+datex-core = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.0.8", features = ["default", "debug"] }
 
 tokio = { version = "1.17.0", features = ["full"] }
 #tower-lsp = { version = "0.20.0", features = ["proposed"]}

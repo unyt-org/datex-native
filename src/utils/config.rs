@@ -1,14 +1,14 @@
 use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions};
 use datex_core::network::com_interfaces::default_com_interfaces::websocket::websocket_common::WebSocketClientInterfaceSetupData;
 use datex_core::runtime::{Runtime, RuntimeConfig};
-use datex_core::serde::deserializer::DatexDeserializer;
+use datex_core::serde::deserializer::{from_dx_file, DatexDeserializer};
 use datex_core::serde::error::{DeserializationError, SerializationError};
 use datex_core::serde::serializer::to_value_container;
 use datex_core::values::core_values::endpoint::Endpoint;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
-
+use datex_core::network::com_hub::InterfacePriority;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -36,8 +36,7 @@ impl From<std::io::Error> for ConfigError {
 }
 
 pub fn read_config_file(path: PathBuf) -> Result<RuntimeConfig, ConfigError> {
-    let deserializer = DatexDeserializer::from_dx_file(path)?;
-    let config: RuntimeConfig = Deserialize::deserialize(deserializer)?;
+    let config: RuntimeConfig = from_dx_file(path)?;
     Ok(config)
 }
 
@@ -77,8 +76,9 @@ pub fn create_new_config_file(
     config.add_interface(
         "websocket-client".to_string(),
         WebSocketClientInterfaceSetupData {
-            address: "wss://example.unyt.land".to_string(),
+            url: "wss://example.unyt.land".to_string(),
         },
+        InterfacePriority::default(),
     )?;
 
     let mut config_path = base_path.clone();
