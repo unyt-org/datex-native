@@ -4,7 +4,7 @@
         {
             type: "websocket-server",
             config: {
-                port: 8042,
+                bind_address: "0.0.0.0:8042",
                 secure: false
             }
         }
