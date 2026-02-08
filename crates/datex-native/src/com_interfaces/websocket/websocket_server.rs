@@ -1,4 +1,4 @@
-use datex::{derive_setup_data};
+use datex_core::{derive_setup_data};
 use core::{
      result::Result, str::FromStr,
 };
@@ -11,7 +11,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tungstenite::Message;
 use tokio_tungstenite::{accept_async, WebSocketStream};
 use futures::lock::Mutex;
-use datex::{
+use datex_core::{
     network::{
         com_hub::errors::ComInterfaceCreateError,
         com_interfaces::com_interface::{
@@ -22,9 +22,9 @@ use datex::{
         },
     },
 };
-use datex::global::dxb_block::DXBBlock;
-use datex::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SocketProperties, SocketConfiguration};
-use datex::network::com_interfaces::default_setup_data::websocket::websocket_server::WebSocketServerInterfaceSetupData;
+use datex_core::global::dxb_block::DXBBlock;
+use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SocketProperties, SocketConfiguration};
+use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_server::WebSocketServerInterfaceSetupData;
 
 derive_setup_data!(WebSocketServerInterfaceSetupDataNative, WebSocketServerInterfaceSetupData);
 
@@ -145,7 +145,7 @@ impl ComInterfaceAsyncFactory for WebSocketServerInterfaceSetupDataNative {
 #[cfg(test)]
 mod tests {
     use std::assert_matches;
-    use datex::{
+    use datex_core::{
         network::{
             com_hub::errors::ComInterfaceCreateError,
         },

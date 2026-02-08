@@ -1,6 +1,6 @@
-use datex::network::com_interfaces::default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData;
+use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData;
 use core::net::AddrParseError;
-use datex::{derive_setup_data, network::{
+use datex_core::{derive_setup_data, network::{
     com_hub::errors::ComInterfaceCreateError,
     com_interfaces::com_interface::{
         factory::{
@@ -21,8 +21,8 @@ use tokio::{
         tcp::{OwnedReadHalf, OwnedWriteHalf},
     },
 };
-use datex::global::dxb_block::DXBBlock;
-use datex::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
+use datex_core::global::dxb_block::DXBBlock;
+use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
 use futures::lock::Mutex;
 
 derive_setup_data!(TCPServerInterfaceSetupDataNative, TCPServerInterfaceSetupData);
@@ -124,7 +124,7 @@ impl ComInterfaceAsyncFactory for TCPServerInterfaceSetupDataNative {
 #[cfg(test)]
 mod tests {
     use std::assert_matches;
-    use datex::{
+    use datex_core::{
         network::{
             com_hub::errors::ComInterfaceCreateError,
         },

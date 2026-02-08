@@ -1,4 +1,4 @@
-use datex::{derive_setup_data};
+use datex_core::{derive_setup_data};
 use core::{ result::Result};
 use std::sync::Arc;
 use futures_util::{
@@ -11,8 +11,8 @@ use tungstenite::Message;
 use url::Url;
 use futures::lock::Mutex;
 
-use datex::network::com_interfaces::default_setup_data::websocket::websocket_client::{WebSocketClientInterfaceSetupData};
-use datex::{
+use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::{WebSocketClientInterfaceSetupData};
+use datex_core::{
     network::{
         com_hub::errors::ComInterfaceCreateError,
         com_interfaces::com_interface::{
@@ -24,9 +24,9 @@ use datex::{
     },
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
-use datex::network::com_interfaces::default_setup_data::http_common::parse_url;
-use datex::global::dxb_block::DXBBlock;
-use datex::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SocketConfiguration, SendCallback, SendFailure, SocketProperties};
+use datex_core::network::com_interfaces::default_setup_data::http_common::parse_url;
+use datex_core::global::dxb_block::DXBBlock;
+use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SocketConfiguration, SendCallback, SendFailure, SocketProperties};
 
 derive_setup_data!(WebSocketClientInterfaceSetupDataNative, WebSocketClientInterfaceSetupData);
 

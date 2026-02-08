@@ -1,6 +1,6 @@
 [package]
 name = "datex-native"
-version = "0.0.1"
+version = "0.0.9"
 description = "DATEX Native Extensions"
 authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
@@ -14,7 +14,7 @@ license-file = "LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-datex-macros = { path = "../datex-macros", version = "0.1.3" }
+datex-macros = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.1.3" }
 datex-core = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.0.8", features = [
     "default",
 ] }

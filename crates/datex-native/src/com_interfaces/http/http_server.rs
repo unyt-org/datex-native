@@ -1,10 +1,10 @@
-use datex::{derive_setup_data};
+use datex_core::{derive_setup_data};
 use core::str::FromStr;
 use std::net::SocketAddr;
 use async_tiny::{Response, Server};
 
-use datex::network::com_interfaces::default_setup_data::http::http_server::{HTTPServerInterfaceSetupData};
-use datex::{
+use datex_core::network::com_interfaces::default_setup_data::http::http_server::{HTTPServerInterfaceSetupData};
+use datex_core::{
     network::{
         com_hub::errors::ComInterfaceCreateError,
         com_interfaces::com_interface::{
@@ -15,9 +15,9 @@ use datex::{
         },
     },
 };
-use datex::network::com_interfaces::com_interface::properties::InterfaceDirection;
-use datex::global::dxb_block::DXBBlock;
-use datex::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SendSuccess, SocketConfiguration, SocketProperties};
+use datex_core::network::com_interfaces::com_interface::properties::InterfaceDirection;
+use datex_core::global::dxb_block::DXBBlock;
+use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SendSuccess, SocketConfiguration, SocketProperties};
 
 derive_setup_data!(HTTPServerInterfaceSetupDataNative, HTTPServerInterfaceSetupData);
 
