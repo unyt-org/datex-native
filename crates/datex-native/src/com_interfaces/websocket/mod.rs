@@ -7,13 +7,13 @@ mod tests {
     use ntest_timeout::timeout;
     use tokio::join;
     use crate::com_interfaces::tests::{test_client_server_interfaces, test_client_server_sockets};
-    use datex::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
+    use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
 
-    use datex::network::com_interfaces::default_setup_data::websocket::websocket_server::WebSocketServerInterfaceSetupData;
+    use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_server::WebSocketServerInterfaceSetupData;
     use crate::com_interfaces::websocket::websocket_server::WebSocketServerInterfaceSetupDataNative;
-    use datex::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
+    use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
     use crate::com_interfaces::websocket::websocket_client::WebSocketClientInterfaceSetupDataNative;
-    use datex::utils::async_iterators::async_next_pin_box;
+    use datex_core::utils::async_iterators::async_next_pin_box;
 
     #[tokio::test]
     #[timeout(2000)]

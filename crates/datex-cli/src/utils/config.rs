@@ -1,7 +1,5 @@
 use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions};
-use datex_core::network::com_interfaces::default_com_interfaces::websocket::websocket_common::WebSocketClientInterfaceSetupData;
-use datex_core::runtime::{Runtime, RuntimeConfig};
-use datex_core::serde::deserializer::{from_dx_file, DatexDeserializer};
+use datex_core::runtime::{Runtime, RuntimeConfig, RuntimeRunner};
 use datex_core::serde::error::{DeserializationError, SerializationError};
 use datex_core::serde::serializer::to_value_container;
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -9,6 +7,8 @@ use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use datex_core::network::com_hub::InterfacePriority;
+use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
+use datex_core::serde::deserializer::from_dx_file;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -128,28 +128,29 @@ pub fn get_config(custom_config_path: Option<PathBuf>) -> Result<RuntimeConfig, 
     })
 }
 
-pub async fn create_runtime_with_config(
+pub async fn run_runtime_with_config<AppReturn, AppFuture>(
     custom_config_path: Option<PathBuf>,
-    force_debug: bool,
     print_header: bool,
-) -> Result<Runtime, ConfigError> {
-    let mut config = get_config(custom_config_path)?;
-    // overwrite debug mode if force_debug is true
-    if force_debug {
-        config.debug = Some(true);
-    }
-    let runtime = Runtime::create_native(config).await;
+    app_logic:  impl FnOnce(Runtime) -> AppFuture,
+) -> Result<AppReturn, ConfigError>
+    where AppFuture: Future<Output = AppReturn>
+{
+    let config = get_config(custom_config_path)?;
+    let runtime = RuntimeRunner::new(config);
 
-    if print_header {
-        let cli_version = env!("CARGO_PKG_VERSION");
+    Ok(runtime.run(async |runtime: Runtime| {
 
-        println!("================================================");
-        println!("DATEX REPL v{cli_version}");
-        println!("DATEX Core version: {}", runtime.version);
-        println!("Endpoint: {}", runtime.endpoint());
-        println!("\nexit using [CTRL + C]");
-        println!("================================================\n");
-    }
+        if print_header {
+            let cli_version = env!("CARGO_PKG_VERSION");
 
-    Ok(runtime)
+            println!("================================================");
+            println!("DATEX REPL v{cli_version}");
+            println!("DATEX Core version: {}", runtime.version);
+            println!("Endpoint: {}", runtime.endpoint());
+            println!("\nexit using [CTRL + C]");
+            println!("================================================\n");
+        }
+
+        app_logic(runtime).await
+    }).await)
 }

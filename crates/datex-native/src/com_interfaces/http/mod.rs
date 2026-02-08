@@ -5,15 +5,15 @@ pub mod http_client;
 mod tests {
     use ntest_timeout::timeout;
     use tokio::join;
-    use datex::global::dxb_block::DXBBlock;
+    use datex_core::global::dxb_block::DXBBlock;
     use crate::com_interfaces::http::http_client::HTTPClientInterfaceSetupDataNative;
     use crate::com_interfaces::http::http_server::HTTPServerInterfaceSetupDataNative;
     use crate::com_interfaces::tests::{test_receive_block, test_send_block_async_callback, test_send_block_sync_once_callback};
-    use datex::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
+    use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
 
-    use datex::network::com_interfaces::default_setup_data::http::http_client::HTTPClientInterfaceSetupData;
-    use datex::network::com_interfaces::default_setup_data::http::http_server::HTTPServerInterfaceSetupData;
-    use datex::utils::async_iterators::async_next_pin_box;
+    use datex_core::network::com_interfaces::default_setup_data::http::http_client::HTTPClientInterfaceSetupData;
+    use datex_core::network::com_interfaces::default_setup_data::http::http_server::HTTPServerInterfaceSetupData;
+    use datex_core::utils::async_iterators::async_next_pin_box;
 
     #[tokio::test]
     #[timeout(100000)]

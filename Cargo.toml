@@ -6,33 +6,22 @@ authors = [
     "Jonas Strehle <jonas@unyt.org>",
 ]
 license = "MIT"
-version = "0.0.6"
+version = "0.0.9"
 edition = "2024"
-build = "build.rs"
 
 [lib]
-name = "datex"
-path = "src/cli/lib.rs"
+path = "src/lib.rs"
 
 [[bin]]
 name = "datex"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.0.23", features = ["derive"] }
-datex-native = { path = "./crates/datex-native", version = "0.0.1" }
-datex-native-macros = { path = "./crates/datex-native-macros", version = "0.0.8" }
+datex-native = { path = "./crates/datex-native", version = "0.0.9" }
+datex-native-macros = { path = "./crates/datex-native-macros", version = "0.0.9" }
+datex-cli = { path = "./crates/datex-cli", version = "0.0.9" }
 
 tokio = { version = "1.17.0", features = ["full"] }
-#tower-lsp = { version = "0.20.0", features = ["proposed"]}
-# using fork realhydroper-lsp because tower-lsp does not support local threading (single-threaded tokio runtime), which is required by the DATEX runtime
-realhydroper-lsp = { version = "0.22.0", features = ["proposed"] }
-serde = { version = "1.0", features = ["derive"] }
-rustyline = "15.0.0"
-ratatui = "0.29.0"
-crossterm = "0.28.1"
-home = "0.5.11"
-serde_json = "1.0.145"
 
 
 [build-dependencies]

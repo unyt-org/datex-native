@@ -1,4 +1,4 @@
-use datex::network::com_hub::ComHub;
+use datex_core::network::com_hub::ComHub;
 
 pub mod tcp;
 pub mod websocket;
@@ -35,9 +35,9 @@ pub fn register_native_interface_factories(com_hub: &ComHub) {
 
 #[cfg(test)]
 pub mod tests {
-    use datex::global::dxb_block::DXBBlock;
-    use datex::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SocketConfiguration, SocketDataIterator};
-    use datex::utils::async_iterators::async_next_pin_box;
+    use datex_core::global::dxb_block::DXBBlock;
+    use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SocketConfiguration, SocketDataIterator};
+    use datex_core::utils::async_iterators::async_next_pin_box;
 
     /// Test utility function to test client-server communication for two sockets
     /// Sends and receives data in both directions

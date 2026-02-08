@@ -6,14 +6,14 @@ pub mod tcp_server;
 mod tests {
     use ntest_timeout::timeout;
     use tokio::join;
-    use datex::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
+    use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
 
     use crate::com_interfaces::tcp::tcp_client::TCPClientInterfaceSetupDataNative;
     use crate::com_interfaces::tcp::tcp_server::TCPServerInterfaceSetupDataNative;
     use crate::com_interfaces::tests::test_client_server_sockets;
-    use datex::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
-    use datex::network::com_interfaces::default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData;
-    use datex::utils::async_iterators::async_next_pin_box;
+    use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
+    use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData;
+    use datex_core::utils::async_iterators::async_next_pin_box;
 
     #[tokio::test]
     #[timeout(2000)]

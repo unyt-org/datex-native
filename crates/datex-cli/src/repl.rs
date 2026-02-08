@@ -1,15 +1,11 @@
-use crate::utils::config::{ConfigError, create_runtime_with_config};
+use crate::utils::config::{ConfigError, run_runtime_with_config};
 use crate::utils::paths::get_datex_base_dir;
-use datex_core::crypto::crypto_native::CryptoNative;
 use datex_core::decompiler::{
     DecompileOptions, FormattingMode, FormattingOptions, apply_syntax_highlighting, decompile_value,
 };
-use datex_core::run_async;
 use datex_core::runtime::execution::context::{
     ExecutionContext, ExecutionMode, ScriptExecutionError,
 };
-use datex_core::runtime::global_context::{GlobalContext, set_global_context};
-use datex_core::utils::time_native::TimeNative;
 use datex_core::values::core_values::endpoint::Endpoint;
 use rustyline::Helper;
 use rustyline::completion::Completer;
@@ -22,6 +18,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
+use datex_core::runtime::Runtime;
 
 struct DatexSyntaxHelper;
 
@@ -74,18 +71,13 @@ impl From<ConfigError> for ReplError {
 }
 
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
-    set_global_context(GlobalContext::new(
-        Arc::new(CryptoNative),
-        Arc::new(TimeNative),
-    ));
 
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
-    run_async! {
-        let runtime = create_runtime_with_config(options.config_path, options.verbose, true).await?;
+    repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
-        repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
+    let res = run_runtime_with_config(options.config_path, options.verbose, async |runtime: Runtime| {
 
         // create context
         let mut execution_context = if options.verbose {
@@ -167,9 +159,9 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                 }
             }
         }
+    }).await;
 
-        Ok(())
-    }
+    Ok(res?)
 }
 
 enum ReplCommand {

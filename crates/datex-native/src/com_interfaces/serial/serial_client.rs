@@ -1,5 +1,5 @@
-use datex::network::com_interfaces::default_setup_data::serial::serial_client::SerialClientInterfaceSetupData;
-use datex::{derive_setup_data, network::{
+use datex_core::network::com_interfaces::default_setup_data::serial::serial_client::SerialClientInterfaceSetupData;
+use datex_core::{derive_setup_data, network::{
     com_hub::errors::ComInterfaceCreateError,
     com_interfaces::com_interface::{
         properties::{InterfaceDirection, ComInterfaceProperties},
@@ -9,10 +9,10 @@ use core::{ result::Result};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use log::{error};
-use datex::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
-use datex::global::dxb_block::DXBBlock;
-use datex::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
-use datex::network::com_interfaces::com_interface::factory::{SocketConfiguration, SendCallback, SendFailure, SocketProperties, SendSuccess, ComInterfaceAsyncFactory};
+use datex_core::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
+use datex_core::global::dxb_block::DXBBlock;
+use datex_core::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
+use datex_core::network::com_interfaces::com_interface::factory::{SocketConfiguration, SendCallback, SendFailure, SocketProperties, SendSuccess, ComInterfaceAsyncFactory};
 use tokio::task::spawn_blocking;
 
 derive_setup_data!(SerialClientInterfaceSetupDataNative, SerialClientInterfaceSetupData);

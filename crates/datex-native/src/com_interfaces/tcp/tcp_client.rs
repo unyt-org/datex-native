@@ -1,6 +1,6 @@
-use datex::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
+use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
 
-use datex::{derive_setup_data, network::{
+use datex_core::{derive_setup_data, network::{
     com_hub::errors::ComInterfaceCreateError,
     com_interfaces::com_interface::{
         factory::{
@@ -20,8 +20,8 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpStream},
 };
-use datex::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
-use datex::network::com_interfaces::com_interface::factory::{SendCallback, SendFailure, SocketConfiguration, SocketProperties};
+use datex_core::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
+use datex_core::network::com_interfaces::com_interface::factory::{SendCallback, SendFailure, SocketConfiguration, SocketProperties};
 
 
 derive_setup_data!(TCPClientInterfaceSetupDataNative, TCPClientInterfaceSetupData);
@@ -100,7 +100,7 @@ impl ComInterfaceAsyncFactory for TCPClientInterfaceSetupDataNative {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use datex::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
+    use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
 
     #[tokio::test]
     async fn test_construct_invalid_address() {

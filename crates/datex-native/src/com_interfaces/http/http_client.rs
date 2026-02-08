@@ -1,10 +1,10 @@
-use datex::channel::mpsc::create_unbounded_channel;
-use datex::derive_setup_data;
-use datex::network::com_hub::errors::ComInterfaceCreateError;
-use datex::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
-use datex::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory, ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
-use datex::network::com_interfaces::com_interface::properties::{ComInterfaceProperties, InterfaceDirection};
-use datex::network::com_interfaces::default_setup_data::http::http_client::HTTPClientInterfaceSetupData;
+use datex_core::channel::mpsc::create_unbounded_channel;
+use datex_core::derive_setup_data;
+use datex_core::network::com_hub::errors::ComInterfaceCreateError;
+use datex_core::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
+use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory, ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
+use datex_core::network::com_interfaces::com_interface::properties::{ComInterfaceProperties, InterfaceDirection};
+use datex_core::network::com_interfaces::default_setup_data::http::http_client::HTTPClientInterfaceSetupData;
 
 derive_setup_data!(HTTPClientInterfaceSetupDataNative, HTTPClientInterfaceSetupData);
 
