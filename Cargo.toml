@@ -1,6 +1,6 @@
 [package]
-name = "datex_cli"
-description = "The standalone Datex CLI"
+name = "datex"
+description = "The DATEX native libary."
 authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
     "Jonas Strehle <jonas@unyt.org>",
@@ -10,9 +10,18 @@ version = "0.0.6"
 edition = "2024"
 build = "build.rs"
 
+[lib]
+name = "datex"
+path = "src/cli/lib.rs"
+
+[[bin]]
+name = "datex"
+path = "src/main.rs"
+
 [dependencies]
 clap = { version = "4.0.23", features = ["derive"] }
-datex-core = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.0.8", features = ["default", "debug"] }
+datex-native = { path = "./crates/datex-native", version = "0.0.1" }
+datex-native-macros = { path = "./crates/datex-native-macros", version = "0.0.8" }
 
 tokio = { version = "1.17.0", features = ["full"] }
 #tower-lsp = { version = "0.20.0", features = ["proposed"]}
