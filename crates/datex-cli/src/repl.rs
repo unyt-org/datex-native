@@ -72,6 +72,8 @@ impl From<ConfigError> for ReplError {
 
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
+    flexi_logger::init();
+
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
