@@ -39,13 +39,15 @@ serialport = { version = "4.7.1", optional = true }
 
 
 [features]
-com_interface_http = ["dep:async_tiny", "dep:reqwest"]
-com_interface_websocket = ["dep:tokio-tungstenite", "dep:tungstenite"]
-com_interface_serial = ["dep:serialport"]
+http = ["dep:async_tiny", "dep:reqwest"]
+websocket = ["dep:tokio-tungstenite", "dep:tungstenite"]
+serial = ["dep:serialport"]
+tcp = []
 
 
 default = [
-    "com_interface_http",
-    "com_interface_websocket",
-    "com_interface_serial",
+    "http",
+    "websocket",
+    "serial",
+    "tcp"
 ]

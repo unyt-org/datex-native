@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use datex_core::network::com_hub::InterfacePriority;
 use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
 use datex_core::serde::deserializer::from_dx_file;
+use datex_native::com_interfaces::register_native_interface_factories;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -136,9 +137,11 @@ pub async fn run_runtime_with_config<AppReturn, AppFuture>(
     where AppFuture: Future<Output = AppReturn>
 {
     let config = get_config(custom_config_path)?;
-    let runtime = RuntimeRunner::new(config);
 
-    Ok(runtime.run(async |runtime: Runtime| {
+    let runner = RuntimeRunner::new(config);
+    register_native_interface_factories(&runner.runtime.com_hub());
+
+    Ok(runner.run(async |runtime: Runtime| {
 
         if print_header {
             let cli_version = env!("CARGO_PKG_VERSION");
