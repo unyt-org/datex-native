@@ -48,7 +48,7 @@ impl SerialClientInterfaceSetupDataNative {
                 name: Some(port_name),
                 ..Self::get_default_properties()
             },
-            SocketConfiguration::new(
+            SocketConfiguration::new_in_out(
                 SocketProperties::new(InterfaceDirection::InOut, 1),
                 async gen move {
                     loop {

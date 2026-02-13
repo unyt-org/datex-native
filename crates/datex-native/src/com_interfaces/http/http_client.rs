@@ -18,7 +18,7 @@ impl HTTPClientInterfaceSetupDataNative {
                 name: Some(self.url.clone()),
                 ..Self::get_default_properties()
             },
-            SocketConfiguration::new(
+            SocketConfiguration::new_in_out(
                 SocketProperties::new(InterfaceDirection::InOut, 1),
                 async gen move {
                     while let Some(response_data) = response_receiver.next().await {
