@@ -44,7 +44,7 @@ impl HTTPServerInterfaceSetupDataNative {
                     println!("Accepted new HTTP request: {} {}", request.method(), request.url());
                     let request_body = request.body().to_vec();
                     // yield new socket data
-                    yield Ok(SocketConfiguration::new(
+                    yield Ok(SocketConfiguration::new_in_out(
                         SocketProperties::new(InterfaceDirection::InOut, 1),
                         // handle request data
                         async gen move {

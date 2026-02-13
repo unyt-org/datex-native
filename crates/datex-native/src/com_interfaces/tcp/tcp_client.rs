@@ -45,7 +45,7 @@ impl TCPClientInterfaceSetupDataNative {
                 name: Some(self.0.address),
                 ..Self::get_default_properties()
             },
-            SocketConfiguration::new(
+            SocketConfiguration::new_in_out(
                 SocketProperties::new(
                     InterfaceDirection::InOut,
                     1,
