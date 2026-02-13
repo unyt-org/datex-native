@@ -53,7 +53,7 @@ impl WebSocketServerInterfaceSetupDataNative {
                         Ok((mut read, write)) => {
                             info!("Accepted new WebSocket connection");
                             // yield new socket data
-                            yield Ok(SocketConfiguration::new(
+                            yield Ok(SocketConfiguration::new_in_out(
                                 SocketProperties::new(InterfaceDirection::InOut, 1),
                                 // socket incoming blocks iterator
                                 async gen move {
