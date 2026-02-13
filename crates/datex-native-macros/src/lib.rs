@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, parse_quote, ItemFn};
 use datex_core::macro_utils::entrypoint::{datex_main_impl, DatexMainInput, ParsedAttributes};
+use quote::quote;
 
 /// The main entry point for a DATEX application, providing a DATEX runtime instance
 #[proc_macro_attribute]
@@ -13,7 +14,9 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
         func: original_function,
         datex_core_namespace: "datex::core",
         setup: None,
-        init: None,
+        init: Some(quote! {
+            datex::com_interfaces::register_native_interface_factories(&runtime.com_hub());
+        }),
         additional_attributes: vec![parse_quote! {#[tokio::main]}],
         custom_main_inputs: vec![],
         enforce_main_name: false,
