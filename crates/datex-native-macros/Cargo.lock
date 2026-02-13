@@ -69,17 +69,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-timer"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba5fa6ed76cb2aa820707b4eb9ec46f42da9ce70b0eafab5e5e34942b38a44d5"
-dependencies = [
- "libc",
- "wasm-bindgen",
- "winapi",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,12 +78,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "async-unsync"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da39954ed37b9dbb0475df268f10deb609213aefdc6c896adf88417bb2fa7efe"
 
 [[package]]
 name = "autocfg"
@@ -349,9 +332,7 @@ version = "0.0.8"
 dependencies = [
  "ariadne",
  "async-select",
- "async-timer",
  "async-trait",
- "async-unsync",
  "bigdecimal",
  "binrw",
  "bytes",
@@ -367,7 +348,6 @@ dependencies = [
  "futures-core",
  "futures-util",
  "gloo-timers",
- "hashbrown 0.16.1",
  "hex",
  "indexmap 2.13.0",
  "internment",
@@ -438,16 +418,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "datex-macros"
-version = "0.1.4"
-dependencies = [
- "datex-core",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "datex-macros-internal"
 version = "0.0.1"
 dependencies = [
@@ -461,7 +431,6 @@ name = "datex-native-macros"
 version = "0.0.1"
 dependencies = [
  "datex-core",
- "datex-macros",
  "proc-macro2",
  "quote",
  "syn",
@@ -1158,13 +1127,6 @@ name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
-dependencies = [
- "allocator-api2",
- "equivalent",
- "foldhash 0.2.0",
- "serde",
- "serde_core",
-]
 
 [[package]]
 name = "heapless"
@@ -2578,22 +2540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "winapi"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
-dependencies = [
- "winapi-i686-pc-windows-gnu",
- "winapi-x86_64-pc-windows-gnu",
-]
-
-[[package]]
-name = "winapi-i686-pc-windows-gnu"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
-
-[[package]]
 name = "winapi-util"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2601,12 +2547,6 @@ checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
  "windows-sys",
 ]
-
-[[package]]
-name = "winapi-x86_64-pc-windows-gnu"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows-core"

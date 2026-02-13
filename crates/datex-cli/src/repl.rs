@@ -97,8 +97,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                 ReplCommand::LocalMemoryDump => {
                     let metadata = execution_context.memory_dump();
                     if let Some(metadata) = metadata {
-                        let metadata = format!("Memory Dump:\n\n{metadata}");
-                        response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
+                        #[cfg(feature = "decompiler")]
+                        {
+                            let metadata = format!("Memory Dump:\n\n{metadata}");
+                            response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
+                        }
+                        #[cfg(not(feature = "decompiler"))]
+                        {
+                            response_sender.send(ReplResponse::Result(Some("<Memory dump not available - recompile with `decompiler` feature>".to_string()))).await.unwrap();
+                        }
                     }
                     else {
                         response_sender.send(ReplResponse::Result(Some("<Memory dump not available>".to_string()))).await.unwrap();
