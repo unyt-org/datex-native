@@ -17,6 +17,7 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
         init: Some(quote! {
             datex::com_interfaces::register_native_interface_factories(&runtime.com_hub());
         }),
+        pre_body: None,
         additional_attributes: vec![parse_quote! {#[tokio::main]}],
         custom_main_inputs: vec![],
         enforce_main_name: true,
