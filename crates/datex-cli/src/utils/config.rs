@@ -135,7 +135,8 @@ pub async fn run_runtime_with_config<AppReturn, AppFuture>(
 ) -> Result<AppReturn, ConfigError>
     where AppFuture: Future<Output = AppReturn>
 {
-    let config = get_config(custom_config_path)?;
+    let mut config = get_config(custom_config_path)?;
+    config.load_host_env_vars();
 
     let runner = RuntimeRunner::new(config);
     register_native_interface_factories(&runner.runtime.com_hub());
