@@ -21,8 +21,8 @@ pub async fn run() {
 
     // print version
     let command = if command.version {
-        println!("datex-cli {}", env!("CARGO_PKG_VERSION"));
-        println!("datex {}", env!("DEP_DATEX_CORE_VERSION"));
+        println!("datex-native {}", env!("CARGO_PKG_VERSION"));
+        println!("datex-core {}", env!("DEP_DATEX_CORE_VERSION"));
         return;
     } else {
         command.command
