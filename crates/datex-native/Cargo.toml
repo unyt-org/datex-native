@@ -14,7 +14,7 @@ license-file = "LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-datex-core = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.0.8", features = [
+datex-core = { git = "https://github.com/unyt-org/datex", branch = "refactor/update-loop", version = "0.0.8", features = [
     "default",
 ] }
 
