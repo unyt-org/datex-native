@@ -18,4 +18,4 @@ quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 proc-macro2 = { version = "1.0", features = ["span-locations"] }
 
-datex-core = { git = "https://github.com/unyt-org/datex-core", branch = "refactor/update-loop", version = "0.0.8", default-features = false, features = ["std", "syntax_highlighting_legacy", "compiler"]}
+datex-core = { git = "https://github.com/unyt-org/datex", branch = "refactor/update-loop", version = "0.0.8", default-features = false, features = ["std", "syntax_highlighting_legacy", "compiler"]}
