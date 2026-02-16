@@ -126,13 +126,14 @@ dependencies = [
 
 [[package]]
 name = "async-timer"
-version = "0.7.4"
+version = "1.0.0-beta.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba5fa6ed76cb2aa820707b4eb9ec46f42da9ce70b0eafab5e5e34942b38a44d5"
+checksum = "1d420af8e042475e58a20d91af8eda7d6528989418c03f3f527e1c3415696f70"
 dependencies = [
+ "error-code",
  "libc",
  "wasm-bindgen",
- "winapi",
+ "web-time",
 ]
 
 [[package]]
@@ -704,6 +705,7 @@ dependencies = [
 [[package]]
 name = "datex-core"
 version = "0.0.8"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "ariadne",
  "async-select",
@@ -746,6 +748,7 @@ dependencies = [
  "realhydroper-lsp",
  "ringmap",
  "serde",
+ "serde-big-array",
  "serde_json",
  "serde_with",
  "spin",
@@ -764,6 +767,7 @@ dependencies = [
 [[package]]
 name = "datex-crypto-esp32"
 version = "0.0.1"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "datex-crypto-facade",
  "esp-hal",
@@ -774,6 +778,7 @@ dependencies = [
 [[package]]
 name = "datex-crypto-facade"
 version = "0.0.1"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "bs58",
 ]
@@ -781,6 +786,7 @@ dependencies = [
 [[package]]
 name = "datex-crypto-native"
 version = "0.0.1"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "datex-crypto-facade",
  "openssl",
@@ -791,6 +797,7 @@ dependencies = [
 [[package]]
 name = "datex-crypto-web"
 version = "0.0.1"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "datex-crypto-facade",
  "wasm-bindgen",
@@ -801,6 +808,7 @@ dependencies = [
 [[package]]
 name = "datex-macros-internal"
 version = "0.0.1"
+source = "git+https://github.com/unyt-org/datex-core?branch=refactor%2Fupdate-loop#1e5d00b6f758910a65b70e06caa0c3a87b7574a4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3381,6 +3389,15 @@ checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11fc7cc2c76d73e0f27ee52abbd64eec84d46f370c88371120433196934e4b7f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
