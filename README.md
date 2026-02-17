@@ -71,7 +71,7 @@ cargo run workbench
 ### Building for Release
 ```shell
 cargo build --release
-./target/release/datex_cli
+./target/release/datex
 ```
 
 ---
