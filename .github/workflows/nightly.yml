@@ -158,8 +158,6 @@ jobs:
             - name: Build binary
               run: |
                   cargo build --release --target=${{ matrix.target }}
-                  # rename the binary to datex
-                  mv target/${{ matrix.target }}/release/datex${{ matrix.ext }} target/${{ matrix.target }}/release/datex${{ matrix.ext }}
 
             - name: Sign binary (macOS)
               if: contains(matrix.target, 'apple-darwin')
