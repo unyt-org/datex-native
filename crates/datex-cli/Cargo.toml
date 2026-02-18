@@ -15,7 +15,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 clap = { version = "4.0.23", features = ["derive"] }
-datex-core = { git = "https://github.com/unyt-org/datex", branch = "refactor/update-loop", version = "0.0.8", default-features = false, features = ["std", "decompiler", "syntax_highlighting_legacy", "compiler", "lsp_tokio", "allow_unsigned_blocks"] }
+datex-core = { git = "https://github.com/unyt-org/datex", branch = "refactor/update-loop", version = "0.0.8", default-features = false, features = [
+    "target_native",
+    "decompiler",
+    "syntax_highlighting_legacy",
+    "compiler",
+    "lsp_tokio",
+    "allow_unsigned_blocks"
+] }
 datex-native = { path = "../datex-native", version = "0.0.9" }
 
 tokio = { version = "1.17.0", features = ["full"] }
