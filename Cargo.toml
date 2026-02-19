@@ -16,6 +16,11 @@ path = "src/lib.rs"
 name = "datex"
 path = "src/main.rs"
 
+[profile.profiling]
+inherits = "dev"
+opt-level = 1
+debug = true
+
 [dependencies]
 datex-native = { path = "./crates/datex-native", version = "0.0.9" }
 datex-native-macros = { path = "./crates/datex-native-macros", version = "0.0.1" }
