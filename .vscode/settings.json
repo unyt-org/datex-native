@@ -8,5 +8,14 @@
     "rust-analyzer.runnables.extraEnv": {
         "RUSTFLAGS": "--cfg=web_sys_unstable_apis"
     },
-    "rust-analyzer.cargo.features": []
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.cargo.features": [],
+    "rust-analyzer.diagnostics.enable": true,
+    "rust-analyzer.linkedProjects": [
+        "Cargo.toml",
+        "crates/datex-native/Cargo.toml",
+        "crates/datex-native-macros/Cargo.toml",
+    ],
+    "rust-analyzer.check.workspace": false
 }
