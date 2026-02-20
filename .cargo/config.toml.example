@@ -1,3 +1,3 @@
 [patch."https://github.com/unyt-org/datex"]
-datex-core = { path = "../datex-core/crates/datex-core" }
-datex-macros = { path = "../datex-core/crates/datex-macros" }
+datex-core = { path = "../datex/crates/datex-core" }
+datex-macros = { path = "../datex/crates/datex-macros" }
