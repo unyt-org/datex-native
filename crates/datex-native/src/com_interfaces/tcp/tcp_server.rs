@@ -42,7 +42,7 @@ impl TCPServerInterfaceSetupDataNative {
         })?;
         info!("TCP Server listening on {address}");
 
-        Ok(ComInterfaceConfiguration::new(
+        Ok(ComInterfaceConfiguration::new_multi_socket(
             ComInterfaceProperties {
                 name: Some(format!("{}:{}", host, self.port)),
                 ..Self::get_default_properties()
