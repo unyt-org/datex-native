@@ -40,7 +40,7 @@ impl WebSocketServerInterfaceSetupDataNative {
 
         info!("WebSocket Server listening on {addr}");
 
-        Ok(ComInterfaceConfiguration::new(
+        Ok(ComInterfaceConfiguration::new_multi_socket(
             ComInterfaceProperties {
                 name: Some(addr.to_string()),
                 connectable_interfaces: WebSocketServerInterfaceSetupData::get_clients_setup_data(self.0.accept_addresses)?,

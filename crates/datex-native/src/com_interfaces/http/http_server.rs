@@ -32,7 +32,7 @@ impl HTTPServerInterfaceSetupDataNative {
 
         println!("HTTP server running on http://{addr}");
 
-        Ok(ComInterfaceConfiguration::new(
+        Ok(ComInterfaceConfiguration::new_multi_socket(
             ComInterfaceProperties {
                 name: Some(addr.to_string()),
                 connectable_interfaces: HTTPServerInterfaceSetupData::get_clients_setup_data(self.0.accept_addresses)?,
