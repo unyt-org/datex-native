@@ -63,8 +63,6 @@ pub async fn run() {
 async fn execute_file(run: command_line_args::Run) {
     if let Some(file) = run.file {
         run_runtime_with_config(run.config, false, async |runtime| {
-            // yield to wait for connect. TODO: better way
-            tokio::task::yield_now().await;
             let file_contents = std::fs::read_to_string(file).expect("Could not read file");
             let _result = runtime.execute(&file_contents, &[], None).await;
             if let Err(e) = _result {
