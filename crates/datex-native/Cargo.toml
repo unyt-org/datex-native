@@ -14,13 +14,13 @@ license-file = "LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-datex-core = { git = "https://github.com/unyt-org/datex", branch = "refactor/update-loop", version = "0.0.8", default-features = false, features = [
+datex-core = { version = "0.0.9", default-features = false, features = [
     "target_native",
     "decompiler",
     "syntax_highlighting_legacy",
     "compiler",
-    "allow_unsigned_blocks"
-]}
+    "allow_unsigned_blocks",
+] }
 
 ed25519 = { version = "2.2.3", features = ["std"] }
 futures-util = { version = "0.3" }
@@ -48,9 +48,4 @@ serial = ["dep:serialport"]
 tcp = []
 
 
-default = [
-    "http",
-    "websocket",
-    "serial",
-    "tcp"
-]
+default = ["http", "websocket", "serial", "tcp"]
