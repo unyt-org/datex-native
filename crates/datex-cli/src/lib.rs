@@ -1,5 +1,5 @@
 use datex_core::compiler::workspace::CompilerWorkspace;
-use datex_core::decompiler::{DecompileOptions, decompile_value};
+use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions, FormattingMode};
 use datex_core::lsp::create_lsp;
 use datex_core::runtime::{Runtime, RuntimeConfig, RuntimeRunner};
 use datex_core::values::core_values::endpoint::Endpoint;
@@ -73,7 +73,15 @@ async fn execute_file(run: command_line_args::Run) {
                 if let Some(output) = result {
                     let formatted_output = decompile_value(
                         &output,
-                        DecompileOptions::colorized()
+                        DecompileOptions {
+                            formatting_options: FormattingOptions {
+                                mode: FormattingMode::pretty(),
+                                colorized: true,
+                                add_variant_suffix: true,
+                                ..FormattingOptions::default()
+                            },
+                            ..DecompileOptions::default()
+                        }
                     );
                     println!("{}", formatted_output);
                 }
