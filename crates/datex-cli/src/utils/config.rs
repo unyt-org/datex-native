@@ -153,13 +153,12 @@ pub async fn run_runtime_with_config<AppReturn, AppFuture>(
 }
 
 fn print_runtime_header(runtime: &Runtime) {
-    let cli_version = env!("CARGO_PKG_VERSION");
     let endpoint_str_no_color = format!(" Endpoint: {} ", runtime.endpoint());
     let endpoint_str = format!(" Endpoint: {} ", runtime.endpoint().to_string().truecolor(88, 212, 82));
-    let width = endpoint_str_no_color.len().max(30).min(80);
+    let width = endpoint_str_no_color.len().max(20);
 
     println!("┌{}┐", "─".repeat(width));
-    println!("│{:<width$}│", format!(" DATEX v{} (CLI v{}) ", runtime.version, cli_version), width = width);
-    println!("│{:<width$}│", endpoint_str, width = width);
+    println!("│{:<width$}│", format!(" DATEX v{}", runtime.version), width = width);
+    println!("│{:<width$}│", endpoint_str, width = width + endpoint_str.len() - endpoint_str_no_color.len());
     println!("└{}┘", "─".repeat(width));
 }
