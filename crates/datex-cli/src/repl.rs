@@ -73,11 +73,8 @@ impl From<ConfigError> for ReplError {
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
     // if verbose mode is enabled, set log level to debug, otherwise set it to warn
-    if options.verbose {
-        flexi_logger::Logger::try_with_env_or_str("debug").unwrap();
-    } else {
-        flexi_logger::Logger::try_with_env_or_str("warn").unwrap();
-    }
+    let log_level = if options.verbose { "debug" } else { "warn" };
+    flexi_logger::Logger::try_with_env_or_str(log_level).unwrap().start().unwrap();
 
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
