@@ -27,10 +27,6 @@ impl Widget for &ComHub {
                 "Registered Interfaces: ".into(),
                 metadata.interfaces.len().to_string().into(),
             ]),
-            Line::from(vec![
-                "Connected Sockets: ".into(),
-                metadata.endpoint_sockets.len().to_string().into(),
-            ]),
         ];
 
         // add newline
