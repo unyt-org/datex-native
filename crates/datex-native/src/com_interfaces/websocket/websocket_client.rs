@@ -61,7 +61,6 @@ impl WebSocketClientInterfaceSetupDataNative {
                                     return yield Err(());
                                 }
                                 None => {
-                                    warn!("WebSocket closed by peer");
                                     return;
                                 }
                             }
@@ -110,7 +109,6 @@ impl WebSocketClientInterfaceSetupDataNative {
         let (stream, _) = tokio_tungstenite::connect_async(address.clone())
             .await
             .map_err(|e| {
-                error!("Failed to connect to WebSocket server: {e}");
                 ComInterfaceCreateError::connection_error_with_details(
                     e.to_string(),
                 )
