@@ -72,14 +72,19 @@ impl From<ConfigError> for ReplError {
 
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
-    flexi_logger::init();
+    // if verbose mode is enabled, set log level to debug, otherwise set it to warn
+    if options.verbose {
+        flexi_logger::Logger::try_with_env_or_str("debug").unwrap();
+    } else {
+        flexi_logger::Logger::try_with_env_or_str("warn").unwrap();
+    }
 
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
-    repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
+    let res: Result<Result<(), ReplError>, ConfigError> = run_runtime_with_config(options.config_path, true, async |runtime: Runtime| {
 
-    let res = run_runtime_with_config(options.config_path, options.verbose, async |runtime: Runtime| {
+        repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
         // create context
         let mut execution_context = if options.verbose {
@@ -168,9 +173,10 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                 }
             }
         }
-    }).await;
 
-    Ok(res?)
+        Ok(())
+    }).await;
+    res.map_err(|e| ReplError::ConfigError(e))?
 }
 
 enum ReplCommand {
