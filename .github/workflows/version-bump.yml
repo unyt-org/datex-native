@@ -29,8 +29,16 @@ jobs:
           deno-version: v2.x
 
       - name: Bump version of datex
-        id: bump_version
-        run: deno run -A .github/tools/version-bump.ts Cargo.toml ${{ inputs.bump_type }}
+        id: bump_version_datex
+        run: deno run -A .github/tools/version-bump.ts crates/datex ${{ inputs.bump_type }}
+
+      - name: Bump version of datex-cli
+        id: bump_version_cli
+        run: deno run -A .github/tools/version-bump.ts crates/datex-cli ${{ inputs.bump_type }}
+
+      - name: Bump version of datex-native
+        id: bump_version_native
+        run: deno run -A .github/tools/version-bump.ts crates/datex-native ${{ inputs.bump_type }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -46,4 +54,5 @@ jobs:
           delete-branch: true
           labels: |
             release
+            nightly
           reviewers: jonasstrehle,benStre
