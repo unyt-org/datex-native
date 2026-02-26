@@ -2,10 +2,16 @@
     endpoint: @server,
     interfaces: [
         {
+            type: "tcp-server",
+            config: {
+                host: "0.0.0.0",
+                port: 8042
+            }
+        },
+        {
             type: "websocket-server",
             config: {
-                port: 8042,
-                secure: false
+                bind_address: "0.0.0.0:8043"
             }
         }
     ]

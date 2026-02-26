@@ -1,15 +1,11 @@
-use crate::utils::config::{ConfigError, create_runtime_with_config};
+use crate::utils::config::{ConfigError, run_runtime_with_config};
 use crate::utils::paths::get_datex_base_dir;
-use datex_core::crypto::crypto_native::CryptoNative;
 use datex_core::decompiler::{
     DecompileOptions, FormattingMode, FormattingOptions, apply_syntax_highlighting, decompile_value,
 };
-use datex_core::run_async;
 use datex_core::runtime::execution::context::{
     ExecutionContext, ExecutionMode, ScriptExecutionError,
 };
-use datex_core::runtime::global_context::{GlobalContext, set_global_context};
-use datex_core::utils::time_native::TimeNative;
 use datex_core::values::core_values::endpoint::Endpoint;
 use rustyline::Helper;
 use rustyline::completion::Completer;
@@ -22,6 +18,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
+use datex_core::runtime::Runtime;
 
 struct DatexSyntaxHelper;
 
@@ -74,16 +71,15 @@ impl From<ConfigError> for ReplError {
 }
 
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
-    set_global_context(GlobalContext::new(
-        Arc::new(CryptoNative),
-        Arc::new(TimeNative),
-    ));
+
+    // if verbose mode is enabled, set log level to debug, otherwise set it to warn
+    let log_level = if options.verbose { "info" } else { "warn" };
+    flexi_logger::Logger::try_with_env_or_str(log_level).unwrap().start().unwrap();
 
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
-    run_async! {
-        let runtime = create_runtime_with_config(options.config_path, options.verbose, true).await?;
+    let res: Result<Result<(), ReplError>, ConfigError> = run_runtime_with_config(options.config_path, true, async |runtime: Runtime| {
 
         repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
@@ -103,8 +99,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                 ReplCommand::LocalMemoryDump => {
                     let metadata = execution_context.memory_dump();
                     if let Some(metadata) = metadata {
-                        let metadata = format!("Memory Dump:\n\n{metadata}");
-                        response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
+                        #[cfg(feature = "decompiler")]
+                        {
+                            let metadata = format!("Memory Dump:\n\n{metadata}");
+                            response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
+                        }
+                        #[cfg(not(feature = "decompiler"))]
+                        {
+                            response_sender.send(ReplResponse::Result(Some("<Memory dump not available - recompile with `decompiler` feature>".to_string()))).await.unwrap();
+                        }
                     }
                     else {
                         response_sender.send(ReplResponse::Result(Some("<Memory dump not available>".to_string()))).await.unwrap();
@@ -169,7 +172,8 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
         }
 
         Ok(())
-    }
+    }).await;
+    res.map_err(|e| ReplError::ConfigError(e))?
 }
 
 enum ReplCommand {

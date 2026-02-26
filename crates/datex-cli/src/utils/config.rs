@@ -1,14 +1,15 @@
 use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions};
-use datex_core::network::com_interfaces::default_com_interfaces::websocket::websocket_common::WebSocketClientInterfaceSetupData;
-use datex_core::runtime::{Runtime, RuntimeConfig};
-use datex_core::serde::deserializer::DatexDeserializer;
+use datex_core::runtime::{Runtime, RuntimeConfig, RuntimeRunner};
 use datex_core::serde::error::{DeserializationError, SerializationError};
 use datex_core::serde::serializer::to_value_container;
 use datex_core::values::core_values::endpoint::Endpoint;
-use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
-
+use datex_core::network::com_hub::InterfacePriority;
+use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
+use datex_core::serde::deserializer::from_dx_file;
+use datex_native::com_interfaces::register_native_interface_factories;
+use colored::Colorize;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -36,8 +37,7 @@ impl From<std::io::Error> for ConfigError {
 }
 
 pub fn read_config_file(path: PathBuf) -> Result<RuntimeConfig, ConfigError> {
-    let deserializer = DatexDeserializer::from_dx_file(path)?;
-    let config: RuntimeConfig = Deserialize::deserialize(deserializer)?;
+    let config: RuntimeConfig = from_dx_file(path)?;
     Ok(config)
 }
 
@@ -77,8 +77,9 @@ pub fn create_new_config_file(
     config.add_interface(
         "websocket-client".to_string(),
         WebSocketClientInterfaceSetupData {
-            address: "wss://example.unyt.land".to_string(),
+            url: "wss://example.unyt.land".to_string(),
         },
+        InterfacePriority::default(),
     )?;
 
     let mut config_path = base_path.clone();
@@ -94,7 +95,7 @@ pub fn create_new_config_file(
     );
     fs::write(config_path.clone(), datex_script)?;
 
-    println!("Created new config file for {endpoint} at {config_path:?}");
+    println!("Created new config file at {}", config_path.to_str().unwrap());
 
     Ok(config_path)
 }
@@ -115,6 +116,7 @@ pub fn get_config(custom_config_path: Option<PathBuf>) -> Result<RuntimeConfig, 
                     } else {
                         // if there are files, read the first one
                         let config_path = dx_files.first().unwrap().clone();
+                        println!("Using endpoint config file {}", config_path.to_str().unwrap());
                         read_config_file(config_path)?
                     }
                 }
@@ -127,28 +129,36 @@ pub fn get_config(custom_config_path: Option<PathBuf>) -> Result<RuntimeConfig, 
     })
 }
 
-pub async fn create_runtime_with_config(
+pub async fn run_runtime_with_config<AppReturn, AppFuture>(
     custom_config_path: Option<PathBuf>,
-    force_debug: bool,
     print_header: bool,
-) -> Result<Runtime, ConfigError> {
+    app_logic:  impl FnOnce(Runtime) -> AppFuture,
+) -> Result<AppReturn, ConfigError>
+    where AppFuture: Future<Output = AppReturn>
+{
     let mut config = get_config(custom_config_path)?;
-    // overwrite debug mode if force_debug is true
-    if force_debug {
-        config.debug = Some(true);
-    }
-    let runtime = Runtime::create_native(config).await;
+    config.load_host_env_vars();
 
-    if print_header {
-        let cli_version = env!("CARGO_PKG_VERSION");
+    let runner = RuntimeRunner::new(config);
+    register_native_interface_factories(&runner.runtime.com_hub());
 
-        println!("================================================");
-        println!("DATEX REPL v{cli_version}");
-        println!("DATEX Core version: {}", runtime.version);
-        println!("Endpoint: {}", runtime.endpoint());
-        println!("\nexit using [CTRL + C]");
-        println!("================================================\n");
-    }
+    Ok(runner.run(async |runtime: Runtime| {
 
-    Ok(runtime)
+        if print_header {
+            print_runtime_header(&runtime);
+        }
+
+        app_logic(runtime).await
+    }).await)
+}
+
+fn print_runtime_header(runtime: &Runtime) {
+    let endpoint_str_no_color = format!(" Endpoint: {} ", runtime.endpoint());
+    let endpoint_str = format!(" Endpoint: {} ", runtime.endpoint().to_string().truecolor(88, 212, 82));
+    let width = endpoint_str_no_color.len().max(20);
+
+    println!("┌{}┐", "─".repeat(width));
+    println!("│{:<width$}│", format!(" DATEX v{}", runtime.version), width = width);
+    println!("│{:<width$}│", endpoint_str, width = width + endpoint_str.len() - endpoint_str_no_color.len());
+    println!("└{}┘", "─".repeat(width));
 }

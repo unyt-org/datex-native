@@ -1,0 +1,26 @@
+name: Cargo Publish Dry Run
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  publish-dry-run:
+    runs-on: ubuntu-latest
+    name: Cargo Publish Dry Run
+    if: startsWith(github.head_ref, 'release/')
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+
+      - name: Install libudev-dev and pkg-config
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev pkg-config
+
+      - name: Run cargo publish dry-run
+        run: |
+          echo "Running cargo publish dry-run..."
+          cargo publish --dry-run

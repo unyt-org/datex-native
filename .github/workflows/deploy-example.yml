@@ -43,7 +43,7 @@ jobs:
               ref: ${{ needs.get-ref.outputs.ref }}
           - name: Download executable with curl
             run: |
-              curl -L -o datex.zip https://github.com/unyt-org/datex-cli/releases/download/nightly/datex-x86_64-unknown-linux-gnu.zip
+              curl -L -o datex.zip https://github.com/unyt-org/datex-native/releases/download/nightly/datex-x86_64-unknown-linux-gnu.zip
               unzip datex.zip -d datex-bin
               chmod +x ./datex-bin/datex
               rm -rf datex.zip

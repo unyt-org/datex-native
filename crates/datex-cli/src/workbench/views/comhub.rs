@@ -1,4 +1,4 @@
-use datex_core::network::com_interfaces::com_interface_properties::InterfaceDirection;
+use datex_core::network::com_interfaces::com_interface::properties::InterfaceDirection;
 use datex_core::runtime::Runtime;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::Borders;
@@ -26,10 +26,6 @@ impl Widget for &ComHub {
             Line::from(vec![
                 "Registered Interfaces: ".into(),
                 metadata.interfaces.len().to_string().into(),
-            ]),
-            Line::from(vec![
-                "Connected Sockets: ".into(),
-                metadata.endpoint_sockets.len().to_string().into(),
             ]),
         ];
 

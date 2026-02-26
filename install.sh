@@ -8,7 +8,7 @@ platform=$(uname -ms)
 
 if [ "$OS" = "Windows_NT" ]; then
 	if [[ $platform != MINGW64* ]]; then
-		powershell -c "irm https://raw.githubusercontent.com/unyt-org/datex-cli/main/install.ps1|iex"
+		powershell -c "irm https://raw.githubusercontent.com/unyt-org/datex-native/main/install.ps1|iex"
 		exit $?
 	fi
 fi
@@ -25,8 +25,8 @@ tildify() {
 }
 
 # ENV setup
-GITHUB="https://github.com/unyt-org/datex-cli"
-GITHUB_API="https://api.github.com/repos/unyt-org/datex-cli"
+GITHUB="https://github.com/unyt-org/datex-native"
+GITHUB_API="https://api.github.com/repos/unyt-org/datex-native"
 
 # Logging
 Color_Off=''
@@ -61,12 +61,12 @@ success() {
 
 # Validate args
 if [[ $# -gt 1 ]]; then
-	error 'Too many arguments passed. You can only pass a specific tag of Datex to be installed. (e.g. "v0.1.4")'
+	error 'Too many arguments passed. You can only pass a specific tag of DATEX to be installed. (e.g. "v0.1.4")'
 fi
 
 # Check for zip utility
 if ! command -v unzip >/dev/null && ! command -v 7z >/dev/null; then
-	error "Either unzip or 7z is required to install Datex." 1>&2
+	error "Either unzip or 7z is required to install DATEX." 1>&2
 	exit 1
 fi
 
@@ -84,7 +84,7 @@ if [[ $target = "darwin-x64" ]]; then
 	# redirect stderr to devnull to avoid error message when not running in Rosetta
 	if [[ $(sysctl -n sysctl.proc_translated 2>/dev/null) = 1 ]]; then
 		target=darwin-aarch64
-		info "Your shell is running in Rosetta 2. Downloading Datex for $target instead."
+		info "Your shell is running in Rosetta 2. Downloading DATEX for $target instead."
 	fi
 fi
 
@@ -103,11 +103,11 @@ else
 fi
 # if datex_version "null" or empty, error out
 if [[ -z $datex_version || $datex_version == "null" ]]; then
-	error "Failed to determine Datex version. Please specify a valid tag."
+	error "Failed to determine DATEX version. Please specify a valid tag."
 	exit 1
 fi
 
-info_bold "Installing Datex version $datex_version"
+info_bold "Installing DATEX version $datex_version"
 
 # prepare installation directory
 datex_install_dir="${DATEX_INSTALL:-$HOME/.datex}"
@@ -122,7 +122,7 @@ artifact_uri="${GITHUB}/releases/download/${datex_version}/datex-${target}.zip"
 
 rm -f "$exe.zip"
 curl --fail --location --progress-bar --output "$exe.zip" "$artifact_uri" ||
-	error "Failed to download Datex from \"$artifact_uri\""
+	error "Failed to download DATEX from \"$artifact_uri\""
 
 # unzip executable
 if command -v unzip >/dev/null; then
@@ -135,12 +135,12 @@ rm "$exe.zip"
 # give permissions
 if [ -e "$exe" ]; then
 	chmod +x "$exe" ||
-		error 'Failed to set permissions on Datex executable.'
+		error 'Failed to set permissions on DATEX executable.'
 else
-	error "Datex executable not found at $exe"
+	error "DATEX executable not found at $exe"
 fi
 
-success "Datex was installed successfully to $Bold_Green$(tildify "$exe")!"
+success "DATEX was installed successfully to $Bold_Green$(tildify "$exe")!"
 
 # shell detection for persistent installation
 refresh_command=''
@@ -167,7 +167,7 @@ fish)
 	tilde_fish_config=$(tildify "$fish_config")
 	if [[ -w $fish_config ]]; then
 		{
-			echo -e "\n# Datex"
+			echo -e "\n# DATEX"
 
 			for command in "${commands[@]}"; do
 				echo "$command"
@@ -196,7 +196,7 @@ fish)
 
 	if [[ -w $zsh_config ]]; then
 		{
-			echo -e "\n# Datex"
+			echo -e "\n# DATEX"
 			for command in "${commands[@]}"; do
 				echo "$command"
 			done
@@ -237,7 +237,7 @@ fish)
 		tilde_bash_config=$(tildify "$bash_config")
 		if [[ -w $bash_config ]]; then
 			{
-				echo -e "\n# Datex"
+				echo -e "\n# DATEX"
 				for command in "${commands[@]}"; do
 					echo "$command"
 				done
@@ -265,7 +265,7 @@ fish)
 esac
 
 echo
-info "To get started with Datex, run:"
+info "To get started with DATEX, run:"
 echo
 
 if [[ $refresh_command ]]; then
