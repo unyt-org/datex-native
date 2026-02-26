@@ -1,5 +1,5 @@
 [package]
-name = "datex-cli"
+name = "datex_cli"
 description = "The standalone DATEX CLI"
 authors = [
     "Benedikt Strehle <benedikt@unyt.org>",

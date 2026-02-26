@@ -19,7 +19,7 @@ path = "src/main.rs"
 [dependencies]
 datex-native = { path = "./crates/datex-native", version = "0.0.9" }
 datex-native-macros = { path = "./crates/datex-native-macros", version = "0.0.1" }
-datex-cli = { path = "./crates/datex-cli", version = "0.0.9" }
+datex_cli = { path = "./crates/datex-cli", version = "0.0.9" }
 
 tokio = { version = "1.17.0", features = ["full"] }
 

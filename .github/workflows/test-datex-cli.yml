@@ -42,4 +42,4 @@ jobs:
           sudo apt install -y libudev-dev pkg-config
 
       - name: Run clippy (default features)
-        run: cargo clippy -p datex-cli --all-targets
+        run: cargo clippy -p datex_cli --all-targets

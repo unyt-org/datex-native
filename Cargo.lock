@@ -660,27 +660,9 @@ checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
 name = "datex"
 version = "0.0.9"
 dependencies = [
- "datex-cli",
  "datex-native",
  "datex-native-macros",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "datex-cli"
-version = "0.0.9"
-dependencies = [
- "clap",
- "colored",
- "crossterm",
- "datex-core",
- "datex-native",
- "flexi_logger",
- "home",
- "ratatui",
- "rustyline",
- "serde",
+ "datex_cli",
  "serde_json",
  "tokio",
 ]
@@ -798,6 +780,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "datex_cli"
+version = "0.0.9"
+dependencies = [
+ "clap",
+ "colored",
+ "crossterm",
+ "datex-core",
+ "datex-native",
+ "flexi_logger",
+ "home",
+ "ratatui",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
