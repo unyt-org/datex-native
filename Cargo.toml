@@ -9,6 +9,11 @@ license = "MIT"
 version = "0.0.9"
 edition = "2024"
 
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+
 [lib]
 path = "src/lib.rs"
 
