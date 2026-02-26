@@ -39,6 +39,11 @@ jobs:
       - name: Run clippy (default features)
         run: cargo clippy -p datex-native --all-targets
 
+      - name: Install libudev-dev and pkg-config
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev pkg-config
+
       - name: Install cargo-nextest
         run: cargo install cargo-nextest --locked
 
