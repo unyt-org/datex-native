@@ -43,7 +43,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         env:
-          NEW_VERSION: ${{ steps.bump_version.outputs.NEW_VERSION }}
+          NEW_VERSION: ${{ steps.bump_version_datex.outputs.NEW_VERSION }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Bump version to ${{ env.NEW_VERSION }}"
