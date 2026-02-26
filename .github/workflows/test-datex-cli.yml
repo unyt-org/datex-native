@@ -1,0 +1,40 @@
+name: Test (datex-cli)
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -Awarnings
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test (datex-cli)
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-cli
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust (nightly + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: clippy
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target
+          key: ${{ runner.os }}-native-${{ hashFiles('Cargo.lock') }}
+
+      - name: Run clippy (default features)
+        run: cargo clippy -p datex-cli --all-targets
