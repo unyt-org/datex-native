@@ -15,6 +15,11 @@ jobs:
         with:
           toolchain: nightly
 
+      - name: Install libudev-dev and pkg-config
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev pkg-config
+
       - name: Run cargo publish dry-run
         run: |
           echo "Running cargo publish dry-run..."
