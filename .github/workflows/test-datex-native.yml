@@ -36,13 +36,13 @@ jobs:
             target
           key: ${{ runner.os }}-native-${{ hashFiles('Cargo.lock') }}
 
-      - name: Run clippy (default features)
-        run: cargo clippy -p datex-native --all-targets
-
       - name: Install libudev-dev and pkg-config
         run: |
           sudo apt update
           sudo apt install -y libudev-dev pkg-config
+
+      - name: Run clippy (default features)
+        run: cargo clippy -p datex-native --all-targets
 
       - name: Install cargo-nextest
         run: cargo install cargo-nextest --locked
