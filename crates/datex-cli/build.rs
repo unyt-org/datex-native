@@ -1,24 +1,45 @@
-use std::process::Command;
+use std::{fs, path::PathBuf};
 
 fn main() {
-    // Run `cargo metadata` to get dependency information
-    let output = Command::new("cargo")
-        .args(["metadata", "--format-version", "1"])
-        .output()
-        .expect("failed to run cargo metadata");
+    println!("cargo:rerun-if-changed=Cargo.toml");
 
-    let metadata: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    // Find a Cargo.lock by walking up from the crate dir (works in workspace + target/package)
+    let mut dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let lock_path = loop {
+        let candidate = dir.join("Cargo.lock");
+        if candidate.exists() {
+            println!("cargo:rerun-if-changed={}", candidate.display());
+            break candidate;
+        }
+        if !dir.pop() {
+            panic!(
+                "Could not find Cargo.lock by walking up from CARGO_MANIFEST_DIR"
+            );
+        }
+    };
 
-    // Find the `serde` package version
-    let serde_version = metadata["packages"]
-        .as_array()
-        .unwrap()
+    let lock_str = fs::read_to_string(&lock_path).unwrap_or_else(|e| {
+        panic!("failed to read {}: {e}", lock_path.display())
+    });
+
+    let lock_toml: toml::Value = lock_str
+        .parse()
+        .unwrap_or_else(|e| panic!("failed to parse Cargo.lock as TOML: {e}"));
+
+    let pkgs = lock_toml
+        .get("package")
+        .and_then(|v| v.as_array())
+        .expect("Cargo.lock missing [package] array");
+
+    let datex_core_version = pkgs
         .iter()
-        .find(|pkg| pkg["name"] == "datex-core")
-        .and_then(|pkg| pkg["version"].as_str())
-        .unwrap()
+        .find(|p| p.get("name").and_then(|n| n.as_str()) == Some("datex-core"))
+        .and_then(|p| p.get("version").and_then(|v| v.as_str()))
+        .unwrap_or_else(|| panic!("datex-core not found in Cargo.lock"))
         .to_string();
 
-    // Set environment variable for compile-time use
-    println!("cargo:rustc-env=DEP_DATEX_CORE_VERSION={}", serde_version);
+    println!(
+        "cargo:rustc-env=DEP_DATEX_CORE_VERSION={}",
+        datex_core_version
+    );
 }
