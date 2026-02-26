@@ -76,4 +76,4 @@ cargo build --release
 
 ---
 
-<sub>&copy; unyt 2025 • [unyt.org](https://unyt.org)</sub>
+<sub>&copy; unyt 2026 • [unyt.org](https://unyt.org)</sub>

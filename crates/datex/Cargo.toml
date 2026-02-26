@@ -1,0 +1,28 @@
+[package]
+name = "datex"
+description = "The DATEX native libary."
+authors = [
+    "Benedikt Strehle <benedikt@unyt.org>",
+    "Jonas Strehle <jonas@unyt.org>",
+]
+license = "MIT"
+version = "0.0.9"
+edition = "2024"
+
+
+[lib]
+path = "./src/lib.rs"
+
+[[bin]]
+name = "datex"
+path = "./src/main.rs"
+
+[dependencies]
+datex-native = { path = "../datex-native", version = "0.0.9" }
+datex-native-macros = { path = "../datex-native-macros", version = "0.0.1" }
+datex_cli = { path = "../datex-cli", version = "0.0.9" }
+
+tokio = { version = "1.17.0", features = ["full"] }
+
+[build-dependencies]
+serde_json = "1.0.145"
