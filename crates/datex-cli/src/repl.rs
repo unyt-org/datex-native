@@ -85,9 +85,9 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
         // create context
         let mut execution_context = if options.verbose {
-            ExecutionContext::local_debug_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
+            ExecutionContext::local_debug(ExecutionMode::unbounded(), runtime.internal.clone())
         } else {
-            ExecutionContext::local_with_runtime_internal(runtime.internal.clone(), ExecutionMode::unbounded())
+            ExecutionContext::local(ExecutionMode::unbounded(), runtime.internal.clone())
         };
 
         while let Some(command) = cmd_receiver.recv().await {
@@ -99,15 +99,8 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                 ReplCommand::LocalMemoryDump => {
                     let metadata = execution_context.memory_dump();
                     if let Some(metadata) = metadata {
-                        #[cfg(feature = "decompiler")]
-                        {
-                            let metadata = format!("Memory Dump:\n\n{metadata}");
-                            response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
-                        }
-                        #[cfg(not(feature = "decompiler"))]
-                        {
-                            response_sender.send(ReplResponse::Result(Some("<Memory dump not available - recompile with `decompiler` feature>".to_string()))).await.unwrap();
-                        }
+                        let metadata = format!("Memory Dump:\n\n{metadata}");
+                        response_sender.send(ReplResponse::Result(Some(metadata))).await.unwrap();
                     }
                     else {
                         response_sender.send(ReplResponse::Result(Some("<Memory dump not available>".to_string()))).await.unwrap();
