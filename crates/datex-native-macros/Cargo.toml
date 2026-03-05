@@ -1,6 +1,6 @@
 [package]
 name = "datex-native-macros"
-version = "0.0.1"
+version = "0.0.2"
 description = "DATEX Native Macros"
 authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
