@@ -18,6 +18,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::spawn;
+use datex_core::runtime::execution::execution_input::ExecutionCallerMetadata;
 use datex_core::runtime::Runtime;
 
 struct DatexSyntaxHelper;
@@ -85,9 +86,9 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
         // create context
         let mut execution_context = if options.verbose {
-            ExecutionContext::local_debug(ExecutionMode::unbounded(), runtime.internal.clone())
+            ExecutionContext::local_debug(ExecutionMode::unbounded(), runtime.internal.clone(), ExecutionCallerMetadata::local_default())
         } else {
-            ExecutionContext::local(ExecutionMode::unbounded(), runtime.internal.clone())
+            ExecutionContext::local(ExecutionMode::unbounded(), runtime.internal.clone(), ExecutionCallerMetadata::local_default())
         };
 
         while let Some(command) = cmd_receiver.recv().await {
