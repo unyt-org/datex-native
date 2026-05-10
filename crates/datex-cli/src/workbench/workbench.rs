@@ -74,7 +74,7 @@ impl Workbench {
     fn draw_title(&self, frame: &mut Frame, area: Rect) {
         let title = Line::from(vec![
             " DATEX Workbench ".bold(),
-            format!("v{} ", self.runtime.version).dim(),
+            format!("v{} ", self.runtime.version()).dim(),
         ])
         .black();
 

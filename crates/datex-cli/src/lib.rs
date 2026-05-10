@@ -4,7 +4,8 @@ use datex_core::lsp::create_lsp;
 use datex_core::runtime::{Runtime, RuntimeConfig, RuntimeRunner};
 use datex_core::values::core_values::endpoint::Endpoint;
 use std::path::PathBuf;
-use std::sync::Arc;
+use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
+
 
 mod command_line_args;
 mod repl;
@@ -31,8 +32,8 @@ pub async fn run() {
     if let Some(cmd) = command {
         match cmd {
             Subcommands::Lsp(_) => {
-                let stdin = tokio::io::stdin();
-                let stdout = tokio::io::stdout();
+                let stdin = tokio::io::stdin().compat();
+                let stdout = tokio::io::stdout().compat_write();
 
                 RuntimeRunner::new(RuntimeConfig::new_with_endpoint(Endpoint::default())).run(async |runtime| {
                     create_lsp(runtime, stdin, stdout).await;
@@ -62,7 +63,7 @@ pub async fn run() {
 
 async fn execute_file(run: command_line_args::Run) {
     if let Some(file) = run.file {
-        run_runtime_with_config(run.config, false, async |runtime| {
+        run_runtime_with_config(run.config.as_ref(), false, async |runtime| {
             let file_contents = std::fs::read_to_string(file).expect("Could not read file");
             let _result = runtime.execute(&file_contents, &[], None).await;
             if let Err(e) = _result {
@@ -93,7 +94,7 @@ async fn execute_file(run: command_line_args::Run) {
     }
 }
 
-async fn workbench(config_path: Option<PathBuf>, debug: bool) -> Result<(), ConfigError> {
+async fn workbench(config_path: Option<&PathBuf>, debug: bool) -> Result<(), ConfigError> {
     run_runtime_with_config(config_path, debug, async |runtime| {
         workbench::start_workbench(runtime).await.unwrap();
     }).await

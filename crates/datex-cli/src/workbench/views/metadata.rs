@@ -27,7 +27,7 @@ impl Widget for &Metadata {
             ]),
             Line::from(vec![
                 "Version: ".into(),
-                self.runtime.version.clone().bold(),
+                self.runtime.version().clone().bold(),
             ]),
             // Line::from(vec![
             //     "Allocated pointers: ".into(),

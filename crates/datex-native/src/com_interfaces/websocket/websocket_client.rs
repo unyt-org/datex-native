@@ -7,7 +7,7 @@ use futures_util::{
 };
 use log::{error, info, warn};
 use tokio::net::TcpStream;
-use tungstenite::Message;
+use tungstenite::{Bytes, Message};
 use url::Url;
 use futures::lock::Mutex;
 
@@ -50,7 +50,7 @@ impl WebSocketClientInterfaceSetupDataNative {
                         loop {
                             match read.next().await {
                                 Some(Ok(Message::Binary(data))) => {
-                                    yield Ok(data);
+                                    yield Ok(data.to_vec());
                                 }
                                 Some(Ok(_)) => {
                                     error!("Invalid message type received");
@@ -72,7 +72,7 @@ impl WebSocketClientInterfaceSetupDataNative {
                             write
                                 .lock()
                                 .await
-                                .send(Message::Binary(block.to_bytes())).await
+                                .send(Message::Binary(Bytes::from(block.to_bytes()))).await
                                 .map_err(|e| {
                                     error!("WebSocket write error: {e}");
                                     SendFailure(Box::new(block))

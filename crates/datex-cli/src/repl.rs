@@ -80,15 +80,15 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
     let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
     let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
 
-    let res: Result<Result<(), ReplError>, ConfigError> = run_runtime_with_config(options.config_path, true, async |runtime: Runtime| {
+    let res: Result<Result<(), ReplError>, ConfigError> = run_runtime_with_config(options.config_path.as_ref(), true, async |runtime: Runtime| {
 
         repl_loop(cmd_sender, response_receiver, get_datex_base_dir().unwrap())?;
 
         // create context
         let mut execution_context = if options.verbose {
-            ExecutionContext::local_debug(ExecutionMode::unbounded(), runtime.internal.clone(), ExecutionCallerMetadata::local_default())
+            ExecutionContext::local_debug(ExecutionMode::unbounded(), runtime.clone(), ExecutionCallerMetadata::local_default())
         } else {
-            ExecutionContext::local(ExecutionMode::unbounded(), runtime.internal.clone(), ExecutionCallerMetadata::local_default())
+            ExecutionContext::local(ExecutionMode::unbounded(), runtime.clone(), ExecutionCallerMetadata::local_default())
         };
 
         while let Some(command) = cmd_receiver.recv().await {

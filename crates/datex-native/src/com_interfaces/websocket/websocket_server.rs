@@ -61,7 +61,7 @@ impl WebSocketServerInterfaceSetupDataNative {
                                     loop {
                                         match read.next().await {
                                             Some(Ok(Message::Binary(bin))) => {
-                                                yield Ok(bin);
+                                                yield Ok(bin.to_vec());
                                             }
                                             Some(Ok(_)) => {
                                                 error!("Invalid message type received");
@@ -85,7 +85,7 @@ impl WebSocketServerInterfaceSetupDataNative {
                                         write
                                             .lock()
                                             .await
-                                            .send(Message::Binary(block.to_bytes())).await
+                                            .send(Message::Binary(block.to_bytes().into())).await
                                             .map_err(|e| {
                                                 error!("WebSocket write error: {e}");
                                                 SendFailure(Box::new(block))
