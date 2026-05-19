@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, parse_quote, ItemFn};
-use datex_core::macro_utils::entrypoint::{datex_main_impl, DatexMainInput, ParsedAttributes};
+use datex_macro_utils::entrypoint::{datex_main_impl, DatexMainInput, ParsedAttributes};
 use quote::quote;
 
 /// The main entry point for a DATEX application, providing a DATEX runtime instance

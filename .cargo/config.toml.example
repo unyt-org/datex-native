@@ -1,3 +1,5 @@
-[patch."https://github.com/unyt-org/datex"]
-datex-core = { path = "../datex/crates/datex-core" }
-datex-macros = { path = "../datex/crates/datex-macros" }
+[patch.crates-io]
+datex-core = { path = "../datex/crates/datex-core", default-features = false, features = [
+    "target_native", "decompiler", "syntax_highlighting_legacy", "compiler", "allow_unsigned_blocks"
+] }
+datex-macro-utils = { path = "../datex/crates/datex-macro-utils" }

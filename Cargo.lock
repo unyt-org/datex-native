@@ -147,6 +147,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-timer"
+version = "1.0.0-beta.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d420af8e042475e58a20d91af8eda7d6528989418c03f3f527e1c3415696f70"
+dependencies = [
+ "error-code",
+ "libc",
+ "wasm-bindgen",
+ "web-time",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -156,6 +168,12 @@ dependencies = [
  "quote",
  "syn 2.0.117",
 ]
+
+[[package]]
+name = "async-unsync"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da39954ed37b9dbb0475df268f10deb609213aefdc6c896adf88417bb2fa7efe"
 
 [[package]]
 name = "async_tiny"
@@ -645,7 +663,9 @@ version = "0.0.12"
 dependencies = [
  "ariadne",
  "async-select",
+ "async-timer",
  "async-trait",
+ "async-unsync",
  "bigdecimal",
  "binrw",
  "bytes",
@@ -658,6 +678,7 @@ dependencies = [
  "futures",
  "futures-core",
  "futures-util",
+ "hashbrown 0.16.1",
  "hex",
  "indexmap 2.14.0",
  "internment",
@@ -672,8 +693,6 @@ dependencies = [
  "num_enum",
  "ordered-float 5.3.0",
  "pretty",
- "proc-macro2",
- "quote",
  "realhydroper-lsp",
  "ringmap",
  "serde",
@@ -681,9 +700,9 @@ dependencies = [
  "serde-value",
  "serde_json",
  "serde_with",
+ "spin",
  "strum 0.27.2",
  "strum_macros 0.27.2",
- "syn 2.0.117",
  "syntect",
  "thiserror 2.0.18",
  "tokio",
@@ -705,6 +724,16 @@ dependencies = [
  "openssl",
  "rand",
  "uuid",
+]
+
+[[package]]
+name = "datex-macro-utils"
+version = "0.0.1"
+dependencies = [
+ "datex-core",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -742,8 +771,7 @@ dependencies = [
 name = "datex-native-macros"
 version = "0.0.2"
 dependencies = [
- "datex-core",
- "proc-macro2",
+ "datex-macro-utils",
  "quote",
  "syn 2.0.117",
 ]
@@ -1170,6 +1198,13 @@ name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
+dependencies = [
+ "allocator-api2",
+ "equivalent",
+ "foldhash 0.2.0",
+ "serde",
+ "serde_core",
+]
 
 [[package]]
 name = "hashbrown"
@@ -2991,6 +3026,15 @@ checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "spin"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5fe4ccb98d9c292d56fec89a5e07da7fc4cf0dc11e156b41793132775d3e591"
+dependencies = [
+ "lock_api",
 ]
 
 [[package]]
