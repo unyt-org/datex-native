@@ -4,8 +4,20 @@
         {
             type: "websocket-client",
             config: {
-                url: "ws://0.0.0.0:8042"
-            }
-        }
-    ]
+                url: "ws://0.0.0.0:8042",
+                tls_mode: null
+            },
+            priority: #Priority(0u16)
+        },
+        {
+            type: "tcp-client",
+            config: {
+                address: "0.0.0.0:8043",
+                port: 8043u16,
+                tls_mode: null
+            },
+            priority: #Priority(0u16)
+        },
+    ],
+    env: null
 }

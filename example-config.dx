@@ -5,7 +5,10 @@
             type: "websocket-server",
             config: {
                 bind_address: "0.0.0.0:80",
-            }
+                accept_addresses: []
+            },
+            priority: #Priority(0u16)
         }
-    ]
+    ],
+    env: null
 }
