@@ -20,5 +20,8 @@
             priority: #Priority(0u16)
         }
     ],
-    env: null
+    env: {
+        "keys": "5Cqbbo8Edn2zqBSqum9jBrtKpYKc4oPAub1Eew6fj1ik,Dv3c8Jv2L6v9essp6FCX9Sx9JwFa5YzvbRawMWRG8g2s",
+        "peerkeys": "9t8WtzEUCELp2pmMYnj6YPW5fgmyBQZzbYA9nkY2mbZP",
+    },
 }
