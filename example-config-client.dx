@@ -22,5 +22,7 @@
     env: {
         "keys": "9t8WtzEUCELp2pmMYnj6YPW5fgmyBQZzbYA9nkY2mbZP,qmDZHmjR8bHdCFwHD1r5jgZrQz8zLNKwPXhMGyQKpQi",
         "peerkeys": "5Cqbbo8Edn2zqBSqum9jBrtKpYKc4oPAub1Eew6fj1ik",
+        "cryptokeys": "DQVmAnE78XnKSaxsoAjzQyZoN5U8pbuG5oX1Lr73u8ZA,ZcBcFZyPb4P4Qw6yseN1j6X9mAT9iWhA7P5X53jVSjZ",
+        "peercryptokeys": "9qbdYY6RZLyR1sw1d3jB1W1JunfFEtNbvSWTozoj3yok",
     },
 }
