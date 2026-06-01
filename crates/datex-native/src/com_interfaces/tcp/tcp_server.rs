@@ -42,9 +42,11 @@ impl TCPServerInterfaceSetupDataNative {
         })?;
         info!("TCP Server listening on {address}");
 
+        let sig_key = self.sig_key.as_ref().unwrap().as_str().to_string();
         Ok(ComInterfaceConfiguration::new_multi_socket(
             ComInterfaceProperties {
                 name: Some(format!("{}:{}", host, self.port)),
+                sig_key: Some(sig_key),
                 ..Self::get_default_properties()
             },
             async gen move {

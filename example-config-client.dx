@@ -1,22 +1,23 @@
 {
     endpoint: @client,
     interfaces: [
-        {
-            type: "websocket-client",
-            config: {
-                url: "ws://0.0.0.0:8042",
-                tls_mode: null
-            },
-            priority: #Priority(0u16)
-        },
+//        {
+//           type: "websocket-client",
+//           config: {
+//               url: "ws://0.0.0.0:8042",
+//               tls_mode: null
+//           },
+//           priority: #Priority(0u16)
+//       },
         {
             type: "tcp-client",
             config: {
                 address: "0.0.0.0:8043",
                 port: 8043u16,
-                tls_mode: null
+                tls_mode: null,
+                sig_key: "5Cqbbo8Edn2zqBSqum9jBrtKpYKc4oPAub1Eew6fj1ik",
             },
-            priority: #Priority(0u16)
+            priority: #Priority(0u16),
         },
     ],
     env: {
@@ -24,7 +25,6 @@
         "pri_sig_key": "qmDZHmjR8bHdCFwHD1r5jgZrQz8zLNKwPXhMGyQKpQi",
         "pub_cry_key": "DQVmAnE78XnKSaxsoAjzQyZoN5U8pbuG5oX1Lr73u8ZA",
         "pri_cry_key": "ZcBcFZyPb4P4Qw6yseN1j6X9mAT9iWhA7P5X53jVSjZ",
-        "peer_pub_sig_key": "5Cqbbo8Edn2zqBSqum9jBrtKpYKc4oPAub1Eew6fj1ik",
         "peer_pub_cry_key": "9qbdYY6RZLyR1sw1d3jB1W1JunfFEtNbvSWTozoj3yok",
     },
 }

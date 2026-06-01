@@ -32,6 +32,7 @@ mod tests {
             // create client interface connection
             TCPClientInterfaceSetupDataNative(TCPClientInterfaceSetupData {
                 address: address.clone(),
+                keys: None,
             })
                 .create_interface(),
             // await connections on server side

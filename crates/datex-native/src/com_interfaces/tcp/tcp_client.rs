@@ -43,6 +43,7 @@ impl TCPClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(self.0.address),
+                sig_key: self.0.sig_key,
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(
@@ -108,6 +109,7 @@ mod tests {
         const ADDRESS: &str = "1.2.3";
         let result = TCPClientInterfaceSetupDataNative(TCPClientInterfaceSetupData {
             address: ADDRESS.to_string(),
+            sig_key: None,
         })
             .create_interface()
             .await;

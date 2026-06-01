@@ -7,25 +7,25 @@
                 host: "0.0.0.0",
                 port: 8043u16,
                 accept_addresses: null,
-                tls_mode: null
+                tls_mode: null,
+                sig_key: "9t8WtzEUCELp2pmMYnj6YPW5fgmyBQZzbYA9nkY2mbZP",
             },
             priority: #Priority(0u16)
         },
-        {
-            type: "websocket-server",
-            config: {
-                bind_address: "0.0.0.0:8042",
-                accept_addresses: null,
-            },
-            priority: #Priority(0u16)
-        }
+//       {
+//           type: "websocket-server",
+//           config: {
+//               bind_address: "0.0.0.0:8042",
+//               accept_addresses: null,
+//           },
+//           priority: #Priority(0u16)
+//       }
     ],
     env: {
         "pub_sig_key": "5Cqbbo8Edn2zqBSqum9jBrtKpYKc4oPAub1Eew6fj1ik",
         "pri_sig_key": "Dv3c8Jv2L6v9essp6FCX9Sx9JwFa5YzvbRawMWRG8g2s",
         "pub_cry_key": "9qbdYY6RZLyR1sw1d3jB1W1JunfFEtNbvSWTozoj3yok",
         "pri_cry_key": "4n3Khczk5xJFdpXEeqYDVZNgdmd4TjAtdSKa1qMZGYZ1",
-        "peer_pub_sig_key": "9t8WtzEUCELp2pmMYnj6YPW5fgmyBQZzbYA9nkY2mbZP",
         "peer_pub_cry_key": "DQVmAnE78XnKSaxsoAjzQyZoN5U8pbuG5oX1Lr73u8ZA",
     },
 }
