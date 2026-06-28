@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2025 unyt.org <webmaster@unyt.org>
+# Copyright (C) 2026 unyt.org <webmaster@unyt.org>
 # All rights reserved. MIT license.
 # Usage: install.sh <optional tag>
 set -eo pipefail
