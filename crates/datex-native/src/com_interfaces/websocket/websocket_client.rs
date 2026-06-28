@@ -4,7 +4,7 @@ use futures_util::{
     SinkExt, StreamExt,
     stream::{SplitSink, SplitStream},
 };
-use log::{error, info, warn};
+use log::{error, info};
 use std::{ops::Deref, sync::Arc};
 use tokio::net::TcpStream;
 use tungstenite::{Bytes, Message};

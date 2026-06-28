@@ -1,13 +1,14 @@
-use crate::workbench::views::comhub::ComHub;
-use crate::workbench::views::metadata::Metadata;
+use crate::workbench::views::{comhub::ComHub, metadata::Metadata};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use datex_core::runtime::Runtime;
-use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::{
-    DefaultTerminal, Frame, layout::Rect, style::Stylize, text::Line, widgets::Paragraph,
+    DefaultTerminal, Frame,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::Stylize,
+    text::Line,
+    widgets::Paragraph,
 };
-use std::io;
-use std::time::Duration;
+use std::{io, time::Duration};
 use tokio::task::yield_now;
 
 pub struct Workbench {
@@ -36,7 +37,10 @@ impl Workbench {
     }
 
     /// runs the application's main loop until the user quits
-    pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+    pub async fn run(
+        &mut self,
+        terminal: &mut DefaultTerminal,
+    ) -> io::Result<()> {
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events()?;
@@ -84,7 +88,9 @@ impl Workbench {
     fn handle_events(&mut self) -> io::Result<()> {
         if let Ok(true) = event::poll(Duration::from_millis(10)) {
             match event::read()? {
-                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+                Event::Key(key_event)
+                    if key_event.kind == KeyEventKind::Press =>
+                {
                     self.handle_key_event(key_event)
                 }
                 _ => {}

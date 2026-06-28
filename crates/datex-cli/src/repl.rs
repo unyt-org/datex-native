@@ -1,39 +1,54 @@
-use crate::utils::config::{ConfigError, run_runtime_with_config};
-use crate::utils::paths::get_datex_base_dir;
-use datex_core::decompiler::{
-    DecompileOptions, FormattingMode, FormattingOptions, apply_syntax_highlighting, decompile_value,
+use crate::utils::{
+    config::{ConfigError, run_runtime_with_config},
+    paths::get_datex_base_dir,
 };
-use datex_core::runtime::execution::context::{
-    ExecutionContext, ExecutionMode, ScriptExecutionError,
+use datex_core::{
+    decompiler::{
+        DecompileOptions, FormattingMode, FormattingOptions,
+        apply_syntax_highlighting, decompile_value,
+    },
+    runtime::{
+        Runtime,
+        execution::{
+            context::{ExecutionContext, ExecutionMode, ScriptExecutionError},
+            execution_input::ExecutionCallerMetadata,
+        },
+    },
+    values::core_values::endpoint::Endpoint,
 };
-use datex_core::values::core_values::endpoint::Endpoint;
-use rustyline::Helper;
-use rustyline::completion::Completer;
-use rustyline::config::Configurer;
-use rustyline::error::ReadlineError;
-use rustyline::highlight::{CmdKind, Highlighter};
-use rustyline::hint::Hinter;
-use rustyline::validate::{ValidationContext, ValidationResult, Validator};
-use std::path::PathBuf;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::thread::spawn;
-use datex_core::runtime::execution::execution_input::ExecutionCallerMetadata;
-use datex_core::runtime::Runtime;
+use rustyline::{
+    Helper,
+    completion::Completer,
+    config::Configurer,
+    error::ReadlineError,
+    highlight::{CmdKind, Highlighter},
+    hint::Hinter,
+    validate::{ValidationContext, ValidationResult, Validator},
+};
+use std::{path::PathBuf, str::FromStr, thread::spawn};
 
 struct DatexSyntaxHelper;
 
 impl Highlighter for DatexSyntaxHelper {
-    fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
-        std::borrow::Cow::Owned(apply_syntax_highlighting(line.to_string()).unwrap())
+    fn highlight<'l>(
+        &self,
+        line: &'l str,
+        _pos: usize,
+    ) -> std::borrow::Cow<'l, str> {
+        std::borrow::Cow::Owned(
+            apply_syntax_highlighting(line.to_string()).unwrap(),
+        )
     }
-    fn highlight_char(&self, line: &str, pos: usize, kind: CmdKind) -> bool {
+    fn highlight_char(&self, _line: &str, _pos: usize, _kind: CmdKind) -> bool {
         true
     }
 }
 
 impl Validator for DatexSyntaxHelper {
-    fn validate(&self, ctx: &mut ValidationContext) -> rustyline::Result<ValidationResult> {
+    fn validate(
+        &self,
+        _ctx: &mut ValidationContext,
+    ) -> rustyline::Result<ValidationResult> {
         Ok(ValidationResult::Valid(None))
     }
     fn validate_while_typing(&self) -> bool {
@@ -72,13 +87,17 @@ impl From<ConfigError> for ReplError {
 }
 
 pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
-
     // if verbose mode is enabled, set log level to debug, otherwise set it to warn
     let log_level = if options.verbose { "info" } else { "warn" };
-    flexi_logger::Logger::try_with_env_or_str(log_level).unwrap().start().unwrap();
+    flexi_logger::Logger::try_with_env_or_str(log_level)
+        .unwrap()
+        .start()
+        .unwrap();
 
-    let (cmd_sender, mut cmd_receiver) = tokio::sync::mpsc::channel::<ReplCommand>(100);
-    let (response_sender, response_receiver) = tokio::sync::mpsc::channel::<ReplResponse>(100);
+    let (cmd_sender, mut cmd_receiver) =
+        tokio::sync::mpsc::channel::<ReplCommand>(100);
+    let (response_sender, response_receiver) =
+        tokio::sync::mpsc::channel::<ReplResponse>(100);
 
     let res: Result<Result<(), ReplError>, ConfigError> = run_runtime_with_config(options.config_path.as_ref(), true, async |runtime: Runtime| {
 
@@ -167,7 +186,7 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
 
         Ok(())
     }).await;
-    res.map_err(|e| ReplError::ConfigError(e))?
+    res.map_err(ReplError::ConfigError)?
 }
 
 enum ReplCommand {
@@ -190,7 +209,7 @@ fn repl_loop(
     history_cache_path.push("repl-history.txt");
 
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
-    if let Ok(_) = rl.load_history(&history_cache_path) {}
+    if rl.load_history(&history_cache_path).is_ok() {}
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);
@@ -206,25 +225,35 @@ fn repl_loop(
                             continue;
                         }
                         "com" => {
-                            sender.blocking_send(ReplCommand::ComHubInfo).unwrap();
+                            sender
+                                .blocking_send(ReplCommand::ComHubInfo)
+                                .unwrap();
                         }
                         "mem" => {
-                            sender.blocking_send(ReplCommand::LocalMemoryDump).unwrap();
+                            sender
+                                .blocking_send(ReplCommand::LocalMemoryDump)
+                                .unwrap();
                         }
                         _ => {
                             // if starting with "trace", send trace command
                             if line.starts_with("trace ") {
                                 let endpoint = Endpoint::from_str(&line[6..]);
                                 if endpoint.is_err() {
-                                    println!("Invalid endpoint format. Use 'trace <endpoint>'.");
+                                    println!(
+                                        "Invalid endpoint format. Use 'trace <endpoint>'."
+                                    );
                                     continue;
                                 }
                                 sender
-                                    .blocking_send(ReplCommand::Trace(endpoint.unwrap()))
+                                    .blocking_send(ReplCommand::Trace(
+                                        endpoint.unwrap(),
+                                    ))
                                     .unwrap();
                             } else {
                                 sender
-                                    .blocking_send(ReplCommand::Execute(line.clone()))
+                                    .blocking_send(ReplCommand::Execute(
+                                        line.clone(),
+                                    ))
                                     .unwrap();
                             }
                         }

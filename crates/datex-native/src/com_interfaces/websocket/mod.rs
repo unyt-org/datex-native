@@ -4,46 +4,65 @@ pub mod websocket_server;
 // TODO: move to integration tests once this is a separate crate
 #[cfg(test)]
 mod tests {
+    use crate::com_interfaces::tests::{
+        test_client_server_interfaces, test_client_server_sockets,
+    };
+    use datex_core::network::com_interfaces::com_interface::factory::ComInterfaceAsyncFactory;
     use ntest_timeout::timeout;
     use tokio::join;
-    use crate::com_interfaces::tests::{test_client_server_interfaces, test_client_server_sockets};
-    use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory};
 
-    use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_server::WebSocketServerInterfaceSetupData;
-    use crate::com_interfaces::websocket::websocket_server::WebSocketServerInterfaceSetupDataNative;
-    use datex_core::network::com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData;
-    use crate::com_interfaces::websocket::websocket_client::WebSocketClientInterfaceSetupDataNative;
-    use datex_core::utils::async_iterators::async_next_pin_box;
+    use crate::com_interfaces::websocket::{
+        websocket_client::WebSocketClientInterfaceSetupDataNative,
+        websocket_server::WebSocketServerInterfaceSetupDataNative,
+    };
+    use datex_core::{
+        network::com_interfaces::default_setup_data::websocket::{
+            websocket_client::WebSocketClientInterfaceSetupData,
+            websocket_server::WebSocketServerInterfaceSetupData,
+        },
+        utils::async_iterators::async_next_pin_box,
+    };
 
     #[tokio::test]
     #[timeout(2000)]
     async fn test_connect_and_communicate() {
-        
-        let address= "0.0.0.0:45678".to_string();
+        let address = "0.0.0.0:45678".to_string();
 
         let mut server_interface_configuration =
-            WebSocketServerInterfaceSetupDataNative(WebSocketServerInterfaceSetupData {
-                bind_address: address.clone(),
-                accept_addresses: None,
-            })
-                .create_interface()
-                .await
-                .unwrap();
+            WebSocketServerInterfaceSetupDataNative(
+                WebSocketServerInterfaceSetupData {
+                    bind_address: address.clone(),
+                    accept_addresses: None,
+                },
+            )
+            .create_interface()
+            .await
+            .unwrap();
 
         let (client_interface_configuration, server_socket) = join!(
             // create client interface connection
-            WebSocketClientInterfaceSetupDataNative(WebSocketClientInterfaceSetupData {
-                url: format!("ws://{}", address),
-            })
-                .create_interface(),
+            WebSocketClientInterfaceSetupDataNative(
+                WebSocketClientInterfaceSetupData {
+                    url: format!("ws://{}", address),
+                }
+            )
+            .create_interface(),
             // await connections on server side
-            async_next_pin_box(&mut server_interface_configuration.new_sockets_iterator)
+            async_next_pin_box(
+                &mut server_interface_configuration.new_sockets_iterator
+            )
         );
 
         // get sockets
-        let mut client_interface_configuration = client_interface_configuration.unwrap();
+        let mut client_interface_configuration =
+            client_interface_configuration.unwrap();
         let server_socket = server_socket.unwrap().unwrap();
-        let client_socket = async_next_pin_box(&mut client_interface_configuration.new_sockets_iterator).await.unwrap().unwrap();
+        let client_socket = async_next_pin_box(
+            &mut client_interface_configuration.new_sockets_iterator,
+        )
+        .await
+        .unwrap()
+        .unwrap();
 
         // check client properties
         assert_eq!(
@@ -73,9 +92,6 @@ mod tests {
             "websocket-server"
         );
 
-        test_client_server_sockets(
-            server_socket,
-            client_socket,
-        ).await;
+        test_client_server_sockets(server_socket, client_socket).await;
     }
 }
