@@ -1,19 +1,25 @@
-use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData;
-use core::net::AddrParseError;
-use datex_core::{derive_setup_data, network::{
-    com_hub::errors::ComInterfaceCreateError,
-    com_interfaces::com_interface::{
-        factory::{
-            ComInterfaceAsyncFactory, ComInterfaceAsyncFactoryResult,
+use core::{net::AddrParseError, result::Result};
+use datex_core::{
+    global::dxb_block::DXBBlock,
+    macros::Datex,
+    network::{
+        com_hub::errors::ComInterfaceCreateError,
+        com_interfaces::{
+            com_interface::{
+                factory::{
+                    ComInterfaceAsyncFactory, ComInterfaceAsyncFactoryResult,
+                    ComInterfaceConfiguration, SendCallback, SendFailure,
+                    SocketConfiguration, SocketProperties,
+                },
+                properties::{ComInterfaceProperties, InterfaceDirection},
+            },
+            default_setup_data::tcp::tcp_server::TCPServerInterfaceSetupData,
         },
-        properties::{InterfaceDirection, ComInterfaceProperties},
     },
-}};
-use core::{ result::Result};
-use std::io;
-use std::net::SocketAddr;
-use std::sync::Arc;
+};
+use futures::lock::Mutex;
 use log::{error, info, warn};
+use std::{io, net::SocketAddr, ops::Deref, sync::Arc};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{
@@ -21,14 +27,22 @@ use tokio::{
         tcp::{OwnedReadHalf, OwnedWriteHalf},
     },
 };
-use datex_core::global::dxb_block::DXBBlock;
-use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
-use futures::lock::Mutex;
 
-derive_setup_data!(TCPServerInterfaceSetupDataNative, TCPServerInterfaceSetupData);
+#[derive(Datex)]
+pub struct TCPServerInterfaceSetupDataNative(pub TCPServerInterfaceSetupData);
+
+impl Deref for TCPServerInterfaceSetupDataNative {
+    type Target = TCPServerInterfaceSetupData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl TCPServerInterfaceSetupDataNative {
-    async fn create_interface(self) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
+    async fn create_interface(
+        self,
+    ) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
         let host = self.host.clone().unwrap_or_else(|| "0.0.0.0".to_string());
 
         let address: SocketAddr = format!("{}:{}", host, self.port)
@@ -55,7 +69,10 @@ impl TCPServerInterfaceSetupDataNative {
                             info!("Accepted new TCP connection from {addr}");
                             // yield new socket data
                             yield Ok(SocketConfiguration::new_in_out(
-                                SocketProperties::new(InterfaceDirection::InOut, 1),
+                                SocketProperties::new(
+                                    InterfaceDirection::InOut,
+                                    1,
+                                ),
                                 // socket incoming blocks iterator
                                 async gen move {
                                     // read blocks
@@ -63,34 +80,42 @@ impl TCPServerInterfaceSetupDataNative {
                                         let mut buffer = [0u8; 1024];
                                         match read.read(&mut buffer).await {
                                             Ok(0) => {
-                                                warn!("Connection closed by peer");
+                                                warn!(
+                                                    "Connection closed by peer"
+                                                );
                                                 return;
                                             }
                                             Ok(n) => {
                                                 yield Ok(buffer[..n].to_vec());
                                             }
                                             Err(e) => {
-                                                error!("Failed to read from socket: {e}");
+                                                error!(
+                                                    "Failed to read from socket: {e}"
+                                                );
                                                 return yield Err(());
                                             }
                                         }
                                     }
                                 },
                                 // socket send callback
-                                SendCallback::new_async(move |block: DXBBlock| {
-                                    let write = write.clone();
-                                    async move {
-                                        write
-                                            .lock()
-                                            .await
-                                            .write_all(&block.to_bytes())
-                                            .await
-                                            .map_err(|e| {
-                                                error!("TCP write error: {e}");
-                                                SendFailure(Box::new(block))
-                                            })
-                                    }
-                                })
+                                SendCallback::new_async(
+                                    move |block: DXBBlock| {
+                                        let write = write.clone();
+                                        async move {
+                                            write
+                                                .lock()
+                                                .await
+                                                .write_all(&block.to_bytes())
+                                                .await
+                                                .map_err(|e| {
+                                                    error!(
+                                                        "TCP write error: {e}"
+                                                    );
+                                                    SendFailure(Box::new(block))
+                                                })
+                                        }
+                                    },
+                                ),
                             ));
                         }
                         Err(_) => {
@@ -103,7 +128,12 @@ impl TCPServerInterfaceSetupDataNative {
         ))
     }
 
-    async fn get_next_socket_connection(listener: &TcpListener) -> Result<(SocketAddr, OwnedReadHalf, Arc<Mutex<OwnedWriteHalf>>), io::Error> {
+    async fn get_next_socket_connection(
+        listener: &TcpListener,
+    ) -> Result<
+        (SocketAddr, OwnedReadHalf, Arc<Mutex<OwnedWriteHalf>>),
+        io::Error,
+    > {
         let (stream, addr) = listener.accept().await?;
         // Handle the client connection
         let (tcp_read_half, tcp_write_half) = stream.into_split();
@@ -123,23 +153,19 @@ impl ComInterfaceAsyncFactory for TCPServerInterfaceSetupDataNative {
 
 #[cfg(test)]
 mod tests {
-    use std::assert_matches;
-    use datex_core::{
-        network::{
-            com_hub::errors::ComInterfaceCreateError,
-        },
-    };
     use super::*;
+    use datex_core::network::com_hub::errors::ComInterfaceCreateError;
+    use std::assert_matches;
 
     #[tokio::test]
     async fn test_construct() {
-        
         const PORT: u16 = 5088;
-        let interface_configuration =
-            TCPServerInterfaceSetupDataNative(TCPServerInterfaceSetupData::new_with_port(PORT))
-                .create_interface()
-                .await
-                .unwrap();
+        let interface_configuration = TCPServerInterfaceSetupDataNative(
+            TCPServerInterfaceSetupData::new_with_port(PORT),
+        )
+        .create_interface()
+        .await
+        .unwrap();
 
         assert_eq!(
             interface_configuration.properties.name,
@@ -149,12 +175,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_construct_invalid_address() {
-        
         assert_matches!(
-            TCPServerInterfaceSetupDataNative(TCPServerInterfaceSetupData::new_with_host_and_port(
-                "invalid-address".to_string(),
-                5088
-            ))
+            TCPServerInterfaceSetupDataNative(
+                TCPServerInterfaceSetupData::new_with_host_and_port(
+                    "invalid-address".to_string(),
+                    5088
+                )
+            )
             .create_interface()
             .await,
             Err(ComInterfaceCreateError::InvalidSetupData(_))

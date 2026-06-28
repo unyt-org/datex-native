@@ -1,17 +1,43 @@
-use datex_core::channel::mpsc::create_unbounded_channel;
-use datex_core::derive_setup_data;
-use datex_core::network::com_hub::errors::ComInterfaceCreateError;
-use datex_core::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
-use datex_core::network::com_interfaces::com_interface::factory::{ComInterfaceAsyncFactory, ComInterfaceConfiguration, SendCallback, SendFailure, SocketConfiguration, SocketProperties};
-use datex_core::network::com_interfaces::com_interface::properties::{ComInterfaceProperties, InterfaceDirection};
-use datex_core::network::com_interfaces::default_setup_data::http::http_client::HTTPClientInterfaceSetupData;
+use std::ops::Deref;
 
-derive_setup_data!(HTTPClientInterfaceSetupDataNative, HTTPClientInterfaceSetupData);
+use datex_core::{
+    channel::mpsc::create_unbounded_channel,
+    macros::Datex,
+    network::{
+        com_hub::{
+            errors::ComInterfaceCreateError,
+            managers::com_interface_manager::ComInterfaceAsyncFactoryResult,
+        },
+        com_interfaces::{
+            com_interface::{
+                factory::{
+                    ComInterfaceAsyncFactory, ComInterfaceConfiguration,
+                    SendCallback, SendFailure, SocketConfiguration,
+                    SocketProperties,
+                },
+                properties::{ComInterfaceProperties, InterfaceDirection},
+            },
+            default_setup_data::http::http_client::HTTPClientInterfaceSetupData,
+        },
+    },
+};
+
+#[derive(Datex)]
+pub struct HTTPClientInterfaceSetupDataNative(pub HTTPClientInterfaceSetupData);
+impl Deref for HTTPClientInterfaceSetupDataNative {
+    type Target = HTTPClientInterfaceSetupData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl HTTPClientInterfaceSetupDataNative {
-    async fn create_interface(self) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
-
-        let (response_sender, mut response_receiver) = create_unbounded_channel::<Vec<u8>>();
+    async fn create_interface(
+        self,
+    ) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
+        let (response_sender, mut response_receiver) =
+            create_unbounded_channel::<Vec<u8>>();
 
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
@@ -21,7 +47,9 @@ impl HTTPClientInterfaceSetupDataNative {
             SocketConfiguration::new_in_out(
                 SocketProperties::new(InterfaceDirection::InOut, 1),
                 async gen move {
-                    while let Some(response_data) = response_receiver.next().await {
+                    while let Some(response_data) =
+                        response_receiver.next().await
+                    {
                         yield Ok(response_data);
                     }
                 },
@@ -30,7 +58,8 @@ impl HTTPClientInterfaceSetupDataNative {
                     let mut response_sender = response_sender.clone();
                     async move {
                         let client = reqwest::Client::new();
-                        let response = client.post(&url)
+                        let response = client
+                            .post(&url)
                             .body(block.to_bytes())
                             .send()
                             .await
@@ -39,23 +68,24 @@ impl HTTPClientInterfaceSetupDataNative {
                                 SendFailure(Box::new(block.clone()))
                             })?;
                         let status = response.status();
-                        let bytes = response.bytes().await
-                            .map_err(|e| {
-                                println!("HTTP response read error: {:#?}", e);
-                                SendFailure(Box::new(block.clone()))
-                            })?;
-                        response_sender.start_send(bytes.to_vec())
-                            .unwrap();
+                        let bytes = response.bytes().await.map_err(|e| {
+                            println!("HTTP response read error: {:#?}", e);
+                            SendFailure(Box::new(block.clone()))
+                        })?;
+                        response_sender.start_send(bytes.to_vec()).unwrap();
 
                         if status.is_success() {
                             Ok(())
                         } else {
-                            println!("HTTP request failed with status: {}", status);
+                            println!(
+                                "HTTP request failed with status: {}",
+                                status
+                            );
                             Err(SendFailure(Box::new(block)))
                         }
                     }
-                })
-            )
+                }),
+            ),
         ))
     }
 }
