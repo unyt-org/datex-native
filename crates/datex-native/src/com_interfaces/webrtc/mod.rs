@@ -16,9 +16,7 @@ use datex_core::{
                 properties::{ComInterfaceProperties, InterfaceDirection},
             },
             default_setup_data::webrtc::{
-                NativeWebRTCSignaling, RTCIceCandidateInitDX, RTCIceServerDX,
-                RTCSdpTypeDX, RTCSessionDescriptionDX,
-                WebRTCInterfaceSetupData, WebRTCRoleDX, WebRTCSignalDX,
+                NativeWebRTCSignaling, WebRTCInterfaceSetupData, WebRTCRoleDX,
             },
         },
     },
