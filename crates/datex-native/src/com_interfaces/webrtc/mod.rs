@@ -16,7 +16,7 @@ use datex_core::{
                 properties::{ComInterfaceProperties, InterfaceDirection},
             },
             default_setup_data::webrtc::{
-                NativeWebRTCSignaling, WebRTCInterfaceSetupData, WebRTCRoleDX,
+                WebRTCInterfaceSetupData, WebRTCRoleDX, WebRTCSignaling,
             },
         },
     },
@@ -35,7 +35,7 @@ use webrtc::{
 pub struct WebRTCInterfaceSetupDataNative {
     pub setup: WebRTCInterfaceSetupData,
     #[datex(skip)]
-    pub signaling: Option<Arc<dyn NativeWebRTCSignaling>>,
+    pub signaling: Option<Arc<dyn WebRTCSignaling>>,
 }
 
 impl Deref for WebRTCInterfaceSetupDataNative {
@@ -48,7 +48,7 @@ impl Deref for WebRTCInterfaceSetupDataNative {
 impl WebRTCInterfaceSetupDataNative {
     pub fn new(
         setup: WebRTCInterfaceSetupData,
-        signaling: Arc<dyn NativeWebRTCSignaling>,
+        signaling: Arc<dyn WebRTCSignaling>,
     ) -> Self {
         Self {
             setup,
@@ -80,7 +80,7 @@ impl ComInterfaceAsyncFactory for WebRTCInterfaceSetupDataNative {
 
 async fn create_webrtc_interface(
     setup: WebRTCInterfaceSetupData,
-    signaling: Arc<dyn NativeWebRTCSignaling>,
+    signaling: Arc<dyn WebRTCSignaling>,
 ) -> Result<ComInterfaceConfiguration, String> {
     let api = APIBuilder::new().build();
     let peer_connection = Arc::new(
@@ -150,7 +150,10 @@ async fn create_webrtc_interface(
 
 #[cfg(test)]
 mod tests {
-    use datex_core::channel::mpsc;
+    use datex_core::{
+        channel::mpsc,
+        network::com_interfaces::default_setup_data::webrtc::WebRTCSignalDX,
+    };
     use std::{pin::Pin, time::Duration};
     use tokio::sync::Mutex;
 
@@ -192,7 +195,7 @@ mod tests {
         }
     }
 
-    impl NativeWebRTCSignaling for MemoryWebRTCSignaling {
+    impl WebRTCSignaling for MemoryWebRTCSignaling {
         fn send(
             &self,
             signal: WebRTCSignalDX,

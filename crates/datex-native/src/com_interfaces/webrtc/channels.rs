@@ -3,8 +3,7 @@ use std::sync::Arc;
 use datex_core::{
     channel::mpsc,
     network::com_interfaces::default_setup_data::webrtc::{
-        NativeWebRTCSignaling, RTCSdpTypeDX, WebRTCInterfaceSetupData,
-        WebRTCSignalDX,
+        RTCSdpTypeDX, WebRTCInterfaceSetupData, WebRTCSignalDX, WebRTCSignaling,
     },
 };
 use futures::channel::oneshot;
@@ -21,7 +20,7 @@ use crate::com_interfaces::webrtc::mapping::*;
 
 pub fn install_ice_callback(
     peer_connection: Arc<RTCPeerConnection>,
-    signaling: Arc<dyn NativeWebRTCSignaling>,
+    signaling: Arc<dyn WebRTCSignaling>,
 ) {
     peer_connection.on_ice_candidate(Box::new(move |candidate| {
         let signaling = signaling.clone();
@@ -50,7 +49,7 @@ pub fn install_ice_callback(
 pub async fn create_offerer_channel(
     setup: &WebRTCInterfaceSetupData,
     peer_connection: Arc<RTCPeerConnection>,
-    signaling: Arc<dyn NativeWebRTCSignaling>,
+    signaling: Arc<dyn WebRTCSignaling>,
     incoming_tx: mpsc::Sender<Vec<u8>>,
 ) -> Result<Arc<RTCDataChannel>, String> {
     let data_channel = peer_connection
@@ -123,7 +122,7 @@ pub async fn create_offerer_channel(
 
 pub async fn create_answerer_channel(
     peer_connection: Arc<RTCPeerConnection>,
-    signaling: Arc<dyn NativeWebRTCSignaling>,
+    signaling: Arc<dyn WebRTCSignaling>,
     incoming_tx: mpsc::Sender<Vec<u8>>,
 ) -> Result<Arc<RTCDataChannel>, String> {
     let (dc_tx, dc_rx) = oneshot::channel::<Arc<RTCDataChannel>>();
