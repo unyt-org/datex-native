@@ -5,8 +5,8 @@
             type: "websocket-client",
             config: {
                 url: "ws://0.0.0.0:8042"
-            }
+            },
+            priority: #None
         }
-    ],
-    priority: #None
+    ]
 }

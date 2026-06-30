@@ -5,8 +5,8 @@
             type: "websocket-server",
             config: {
                 bind_address: "0.0.0.0:80",
-            }
-        }
+            },
+            priority: #None
+        },
     ],
-    priority: #None
 }
