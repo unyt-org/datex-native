@@ -7,5 +7,6 @@
                 url: "wss://example.unyt.land"
             }
         }
-    ]
+    ],
+    priority: #None
 }
