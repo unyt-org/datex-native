@@ -5,7 +5,8 @@ authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
     "Jonas Strehle <jonas@unyt.org>",
 ]
-license = "MIT"
+license-file = "../../LICENSE"
+
 version = "0.0.11"
 edition = "2024"
 build = "build.rs"
