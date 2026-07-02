@@ -1,7 +1,9 @@
+use datex_macro_utils::entrypoint::{
+    DatexMainInput, ParsedAttributes, datex_main_impl,
+};
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, parse_quote, ItemFn};
-use datex_core::macro_utils::entrypoint::{datex_main_impl, DatexMainInput, ParsedAttributes};
 use quote::quote;
+use syn::{ItemFn, parse_macro_input, parse_quote};
 
 /// The main entry point for a DATEX application, providing a DATEX runtime instance
 #[proc_macro_attribute]
@@ -15,6 +17,11 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
         datex_core_namespace: "datex::core",
         setup: None,
         init: Some(quote! {
+            datex::flexi_logger::Logger::try_with_env_or_str("warn")
+                   .unwrap_or_else(|_e| datex::flexi_logger::Logger::with(datex::flexi_logger::LogSpecification::warn()))
+                   .log_to_stderr()
+                   .start()
+                   .ok();
             datex::com_interfaces::register_native_interface_factories(&runtime.com_hub());
         }),
         pre_body: None,

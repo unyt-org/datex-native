@@ -1,12 +1,10 @@
 use datex_core::runtime::Runtime;
-use ratatui::style::{Color, Style};
-use ratatui::widgets::Borders;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::Stylize,
+    style::{Color, Style, Stylize},
     text::{Line, Text},
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 
 pub struct Metadata {
@@ -25,10 +23,7 @@ impl Widget for &Metadata {
                 "Endpoint: ".into(),
                 self.runtime.endpoint().to_string().bold(),
             ]),
-            Line::from(vec![
-                "Version: ".into(),
-                self.runtime.version.clone().bold(),
-            ]),
+            Line::from(vec!["Version: ".into(), self.runtime.version().bold()]),
             // Line::from(vec![
             //     "Allocated pointers: ".into(),
             //     self.runtime

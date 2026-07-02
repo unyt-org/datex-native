@@ -1,13 +1,13 @@
-use datex_core::network::com_interfaces::com_interface::properties::InterfaceDirection;
-use datex_core::runtime::Runtime;
-use ratatui::style::{Color, Style};
-use ratatui::widgets::Borders;
+use datex_core::{
+    network::com_interfaces::com_interface::properties::InterfaceDirection,
+    runtime::Runtime,
+};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::Stylize,
+    style::{Color, Style, Stylize},
     text::{Line, Text},
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 pub struct ComHub {
     pub runtime: Runtime,
@@ -22,12 +22,10 @@ impl Widget for &ComHub {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White));
 
-        let mut lines = vec![
-            Line::from(vec![
-                "Registered Interfaces: ".into(),
-                metadata.interfaces.len().to_string().into(),
-            ]),
-        ];
+        let mut lines = vec![Line::from(vec![
+            "Registered Interfaces: ".into(),
+            metadata.interfaces.len().to_string().into(),
+        ])];
 
         // add newline
         lines.push(Line::from(vec!["".into()]));
@@ -36,7 +34,9 @@ impl Widget for &ComHub {
         for interface in metadata.interfaces.iter() {
             lines.push(Line::from(vec![
                 match &interface.properties.name {
-                    Some(name) => format!("{} ({})", interface.properties.channel, name),
+                    Some(name) => {
+                        format!("{} ({})", interface.properties.channel, name)
+                    }
                     None => interface.properties.channel.to_string(),
                 }
                 .to_string()
@@ -50,7 +50,9 @@ impl Widget for &ComHub {
                     match socket.direction {
                         InterfaceDirection::In => " ──▶ ".to_string().into(),
                         InterfaceDirection::Out => " ◀── ".to_string().into(),
-                        InterfaceDirection::InOut => " ◀──▶ ".to_string().into(),
+                        InterfaceDirection::InOut => {
+                            " ◀──▶ ".to_string().into()
+                        }
                     },
                     (match &socket.endpoint {
                         Some(endpoint) => endpoint.to_string(),

@@ -1,35 +1,43 @@
-use datex_core::network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData;
+use datex_core::{
+    macros::Datex,
+    network::com_interfaces::default_setup_data::tcp::tcp_client::TCPClientInterfaceSetupData,
+};
 
-use datex_core::{derive_setup_data, network::{
+use core::{result::Result, str::FromStr};
+use datex_core::network::{
     com_hub::errors::ComInterfaceCreateError,
     com_interfaces::com_interface::{
         factory::{
             ComInterfaceAsyncFactory, ComInterfaceAsyncFactoryResult,
+            ComInterfaceConfiguration, SendCallback, SendFailure,
+            SocketConfiguration, SocketProperties,
         },
-        properties::{InterfaceDirection, ComInterfaceProperties},
+        properties::{ComInterfaceProperties, InterfaceDirection},
     },
-}};
-use core::{
-     result::Result, str::FromStr,
 };
-use std::net::SocketAddr;
-use std::sync::Arc;
 use futures_util::lock::Mutex;
 use log::{error, warn};
+use std::{net::SocketAddr, ops::Deref, sync::Arc};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    net::{TcpStream},
+    net::TcpStream,
 };
-use datex_core::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
-use datex_core::network::com_interfaces::com_interface::factory::{SendCallback, SendFailure, SocketConfiguration, SocketProperties};
 
+#[derive(Datex)]
+pub struct TCPClientInterfaceSetupDataNative(pub TCPClientInterfaceSetupData);
+impl Deref for TCPClientInterfaceSetupDataNative {
+    type Target = TCPClientInterfaceSetupData;
 
-derive_setup_data!(TCPClientInterfaceSetupDataNative, TCPClientInterfaceSetupData);
-
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /// Implementation of the TCP Client Native Interface
 impl TCPClientInterfaceSetupDataNative {
-    async fn create_interface(self) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
+    async fn create_interface(
+        self,
+    ) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
         let address = SocketAddr::from_str(&self.address)
             .map_err(ComInterfaceCreateError::invalid_setup_data)?;
 
@@ -46,10 +54,7 @@ impl TCPClientInterfaceSetupDataNative {
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(
-                SocketProperties::new(
-                    InterfaceDirection::InOut,
-                    1,
-                ),
+                SocketProperties::new(InterfaceDirection::InOut, 1),
                 async gen move {
                     loop {
                         let mut buffer = [0u8; 1024];
@@ -63,7 +68,7 @@ impl TCPClientInterfaceSetupDataNative {
                             }
                             Err(e) => {
                                 error!("Failed to read from socket: {e}");
-                                return yield Err(())
+                                return yield Err(());
                             }
                         }
                     }
@@ -74,7 +79,8 @@ impl TCPClientInterfaceSetupDataNative {
                         write
                             .lock()
                             .await
-                            .write_all(&block.to_bytes()).await
+                            .write_all(&block.to_bytes())
+                            .await
                             .map_err(|e| {
                                 error!("WebSocket write error: {e}");
                                 SendFailure(Box::new(block))
@@ -96,7 +102,6 @@ impl ComInterfaceAsyncFactory for TCPClientInterfaceSetupDataNative {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,13 +109,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_construct_invalid_address() {
-        
         const ADDRESS: &str = "1.2.3";
-        let result = TCPClientInterfaceSetupDataNative(TCPClientInterfaceSetupData {
-            address: ADDRESS.to_string(),
-        })
+        let result =
+            TCPClientInterfaceSetupDataNative(TCPClientInterfaceSetupData {
+                address: ADDRESS.to_string(),
+            })
             .create_interface()
             .await;
-        assert!(matches!(result, Err(ComInterfaceCreateError::InvalidSetupData(_))));
+        assert!(matches!(
+            result,
+            Err(ComInterfaceCreateError::InvalidSetupData(_))
+        ));
     }
 }

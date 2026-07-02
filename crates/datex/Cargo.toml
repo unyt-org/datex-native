@@ -5,7 +5,7 @@ authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
     "Jonas Strehle <jonas@unyt.org>",
 ]
-license = "MIT"
+license-file = "../../LICENSE"
 version = "0.0.11"
 edition = "2024"
 
@@ -18,9 +18,9 @@ name = "datex"
 path = "./src/main.rs"
 
 [dependencies]
-datex-native = { path = "../datex-native", version = "0.0.10" }
-datex-native-macros = { path = "../datex-native-macros", version = "0.0.2" }
-datex_cli = { path = "../datex-cli", version = "0.0.10" }
+datex-native = { path = "../datex-native", version = "0.0.11" }
+datex-native-macros = { path = "../datex-native-macros", version = "0.0.3" }
+datex_cli = { path = "../datex-cli", version = "0.0.11" }
 
 tokio = { version = "1.17.0", features = ["full"] }
 
