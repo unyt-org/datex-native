@@ -1,6 +1,6 @@
 [package]
 name = "datex-native-macros"
-version = "0.0.2"
+version = "0.0.3"
 description = "DATEX Native Macros"
 authors = [
     "Benedikt Strehle <benedikt@unyt.org>",
@@ -8,7 +8,7 @@ authors = [
     "Norbert Brzezinski <norbert@unyt.org>",
 ]
 edition = "2024"
-license-file = "LICENSE"
+license-file = "../../LICENSE"
 
 [lib]
 proc-macro = true
@@ -16,10 +16,4 @@ proc-macro = true
 [dependencies]
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
-proc-macro2 = { version = "1.0", features = ["span-locations"] }
-
-datex-core = { version = "0.0.10", default-features = false, features = [
-    "target_native",
-    "syntax_highlighting_legacy",
-    "compiler",
-] }
+datex-macro-utils = { version = "0.0.1" }

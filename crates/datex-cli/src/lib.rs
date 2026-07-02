@@ -1,19 +1,24 @@
-use datex_core::compiler::workspace::CompilerWorkspace;
-use datex_core::decompiler::{DecompileOptions, decompile_value, FormattingOptions, FormattingMode};
-use datex_core::lsp::create_lsp;
-use datex_core::runtime::{Runtime, RuntimeConfig, RuntimeRunner};
-use datex_core::values::core_values::endpoint::Endpoint;
+use datex_core::{
+    decompiler::{
+        DecompileOptions, FormattingMode, FormattingOptions, decompile_value,
+    },
+    lsp::create_lsp,
+    runtime::{RuntimeConfig, RuntimeRunner},
+    values::core_values::endpoint::Endpoint,
+};
 use std::path::PathBuf;
-use std::sync::Arc;
+use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 mod command_line_args;
 mod repl;
 mod utils;
 mod workbench;
 
-use crate::command_line_args::Repl;
-use crate::repl::{ReplOptions, repl};
-use crate::utils::config::{ConfigError, run_runtime_with_config};
+use crate::{
+    command_line_args::Repl,
+    repl::{ReplOptions, repl},
+    utils::config::{ConfigError, run_runtime_with_config},
+};
 use command_line_args::{Subcommands, get_command};
 
 pub async fn run() {
@@ -31,13 +36,16 @@ pub async fn run() {
     if let Some(cmd) = command {
         match cmd {
             Subcommands::Lsp(_) => {
-                let stdin = tokio::io::stdin();
-                let stdout = tokio::io::stdout();
+                let stdin = tokio::io::stdin().compat();
+                let stdout = tokio::io::stdout().compat_write();
 
-                RuntimeRunner::new(RuntimeConfig::new_with_endpoint(Endpoint::default())).run(async |runtime| {
+                RuntimeRunner::new(RuntimeConfig::new_with_endpoint(
+                    Endpoint::default(),
+                ))
+                .run(async |runtime| {
                     create_lsp(runtime, stdin, stdout).await;
-                }).await;
-
+                })
+                .await;
             }
             Subcommands::Run(run) => {
                 execute_file(run).await;
@@ -62,13 +70,13 @@ pub async fn run() {
 
 async fn execute_file(run: command_line_args::Run) {
     if let Some(file) = run.file {
-        run_runtime_with_config(run.config, false, async |runtime| {
-            let file_contents = std::fs::read_to_string(file).expect("Could not read file");
+        run_runtime_with_config(run.config.as_ref(), false, async |runtime| {
+            let file_contents =
+                std::fs::read_to_string(file).expect("Could not read file");
             let _result = runtime.execute(&file_contents, &[], None).await;
             if let Err(e) = _result {
                 eprintln!("{}", e);
-            }
-            else {
+            } else {
                 let result = _result.unwrap();
                 if let Some(output) = result {
                     let formatted_output = decompile_value(
@@ -81,20 +89,25 @@ async fn execute_file(run: command_line_args::Run) {
                                 ..FormattingOptions::default()
                             },
                             ..DecompileOptions::default()
-                        }
+                        },
                     );
                     println!("{}", formatted_output);
                 }
             }
-        }).await.unwrap();
-    }
-    else {
+        })
+        .await
+        .unwrap();
+    } else {
         eprintln!("No file provided to run.");
     }
 }
 
-async fn workbench(config_path: Option<PathBuf>, debug: bool) -> Result<(), ConfigError> {
+async fn workbench(
+    config_path: Option<&PathBuf>,
+    debug: bool,
+) -> Result<(), ConfigError> {
     run_runtime_with_config(config_path, debug, async |runtime| {
         workbench::start_workbench(runtime).await.unwrap();
-    }).await
+    })
+    .await
 }

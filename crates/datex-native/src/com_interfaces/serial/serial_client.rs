@@ -1,29 +1,56 @@
-use datex_core::network::com_interfaces::default_setup_data::serial::serial_client::SerialClientInterfaceSetupData;
-use datex_core::{derive_setup_data, network::{
-    com_hub::errors::ComInterfaceCreateError,
-    com_interfaces::com_interface::{
-        properties::{InterfaceDirection, ComInterfaceProperties},
+use core::result::Result;
+use datex_core::{
+    global::dxb_block::DXBBlock,
+    macros::Datex,
+    network::{
+        com_hub::{
+            errors::ComInterfaceCreateError,
+            managers::com_interface_manager::ComInterfaceAsyncFactoryResult,
+        },
+        com_interfaces::{
+            com_interface::{
+                factory::{
+                    ComInterfaceAsyncFactory, ComInterfaceConfiguration,
+                    SendCallback, SendFailure, SendSuccess,
+                    SocketConfiguration, SocketProperties,
+                },
+                properties::{ComInterfaceProperties, InterfaceDirection},
+            },
+            default_setup_data::serial::serial_client::SerialClientInterfaceSetupData,
+        },
     },
-}};
-use core::{ result::Result};
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use log::{error};
-use datex_core::network::com_interfaces::com_interface::factory::ComInterfaceConfiguration;
-use datex_core::global::dxb_block::DXBBlock;
-use datex_core::network::com_hub::managers::com_interface_manager::ComInterfaceAsyncFactoryResult;
-use datex_core::network::com_interfaces::com_interface::factory::{SocketConfiguration, SendCallback, SendFailure, SocketProperties, SendSuccess, ComInterfaceAsyncFactory};
+};
+use log::error;
+use std::{
+    ops::Deref,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tokio::task::spawn_blocking;
 
-derive_setup_data!(SerialClientInterfaceSetupDataNative, SerialClientInterfaceSetupData);
+#[derive(Datex)]
+pub struct SerialClientInterfaceSetupDataNative(
+    pub SerialClientInterfaceSetupData,
+);
+impl Deref for SerialClientInterfaceSetupDataNative {
+    type Target = SerialClientInterfaceSetupData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl SerialClientInterfaceSetupDataNative {
     const TIMEOUT: Duration = Duration::from_millis(1000);
     const BUFFER_SIZE: usize = 1024;
 
-    async fn create_interface(self) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
+    async fn create_interface(
+        self,
+    ) -> Result<ComInterfaceConfiguration, ComInterfaceCreateError> {
         let port_name = self.port_name.clone().ok_or(
-            ComInterfaceCreateError::invalid_setup_data("Port name is required"),
+            ComInterfaceCreateError::invalid_setup_data(
+                "Port name is required",
+            ),
         )?;
 
         if port_name.is_empty() {
@@ -37,7 +64,10 @@ impl SerialClientInterfaceSetupDataNative {
             serialport::new(port_name_clone, self.baud_rate)
                 .timeout(Self::TIMEOUT)
                 .open()
-        }).await.unwrap().map_err(|err| {
+        })
+        .await
+        .unwrap()
+        .map_err(|err| {
             ComInterfaceCreateError::connection_error_with_details(err)
         })?;
         let port = Arc::new(Mutex::new(port));
@@ -56,12 +86,16 @@ impl SerialClientInterfaceSetupDataNative {
                             let port = port_clone.clone();
                             move || {
                                 let mut buffer = [0u8; Self::BUFFER_SIZE];
-                                match port.try_lock().unwrap().read(&mut buffer) {
-                                    Ok(n) if n > 0 => Some(buffer[..n].to_vec()),
+                                match port.try_lock().unwrap().read(&mut buffer)
+                                {
+                                    Ok(n) if n > 0 => {
+                                        Some(buffer[..n].to_vec())
+                                    }
                                     _ => None,
                                 }
                             }
-                        }).await;
+                        })
+                        .await;
                         match result {
                             Ok(Some(incoming)) => {
                                 yield Ok(incoming);
@@ -73,18 +107,17 @@ impl SerialClientInterfaceSetupDataNative {
                         }
                     }
                 },
-                SendCallback::new_sync(
-                    move |block: DXBBlock|
-                        port.lock()
-                            .unwrap()
-                            .write_all(block.to_bytes().as_slice())
-                            .map_err(|e| {
-                                error!("Serial write error: {e}");
-                                SendFailure(Box::new(block))
-                            })
-                            .map(|_| SendSuccess::Sent)
-                )
-            )
+                SendCallback::new_sync(move |block: DXBBlock| {
+                    port.lock()
+                        .unwrap()
+                        .write_all(block.to_bytes().as_slice())
+                        .map_err(|e| {
+                            error!("Serial write error: {e}");
+                            SendFailure(Box::new(block))
+                        })
+                        .map(|_| SendSuccess::Sent)
+                }),
+            ),
         ))
     }
 }

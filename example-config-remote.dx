@@ -5,7 +5,8 @@
             type: "websocket-client",
             config: {
                 url: "wss://example.unyt.land"
-            }
+            },
+            priority: #None
         }
-    ]
+    ],
 }
