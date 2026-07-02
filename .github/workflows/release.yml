@@ -16,31 +16,31 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os_name: linux-x86_64
             run_on: ubuntu-latest
-            ext: ''
-#          - target: aarch64-unknown-linux-gnu
-#            os_name: linux-aarch64
-#            run_on: ubuntu-latest
-#            ext: ''
-#          - target: armv7-unknown-linux-gnueabihf
-#            os_name: linux-armv7
-#            run_on: ubuntu-latest
-#            ext: ''
+            ext: ""
+          #          - target: aarch64-unknown-linux-gnu
+          #            os_name: linux-aarch64
+          #            run_on: ubuntu-latest
+          #            ext: ''
+          #          - target: armv7-unknown-linux-gnueabihf
+          #            os_name: linux-armv7
+          #            run_on: ubuntu-latest
+          #            ext: ''
 
           # macOS (x86 and Apple Silicon)
           - target: x86_64-apple-darwin
             os_name: macos-x86_64
             run_on: macos-latest
-            ext: ''
+            ext: ""
           - target: aarch64-apple-darwin
             os_name: macos-aarch64
             run_on: macos-latest
-            ext: ''
+            ext: ""
 
           # Windows (x86_64 only)
           - target: x86_64-pc-windows-gnu
             os_name: windows-x86_64
             run_on: ubuntu-latest
-            ext: '.exe'
+            ext: ".exe"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
 
       # Set environment variables for pkg-config cross compilation
       - name: Set environment variables
-        if : matrix.target == 'aarch64-unknown-linux-gnu'
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu
           export PKG_CONFIG_PATH=$PKG_CONFIG_SYSROOT_DIR/usr/lib/pkgconfig:$PKG_CONFIG_SYSROOT_DIR/usr/share/pkgconfig
@@ -95,11 +95,11 @@ jobs:
           if [ ! -d /usr/local/Homebrew ]; then
             arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
-          
+
           # install x86 openssl
           arch -x86_64 /usr/local/bin/brew update
           arch -x86_64 /usr/local/bin/brew install openssl@3 pkg-config
-      
+
           # Export x86 OpenSSL env vars
           echo "OPENSSL_DIR=/usr/local/opt/openssl@3" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=/usr/local/opt/openssl@3/lib/pkgconfig" >> $GITHUB_ENV
@@ -111,37 +111,37 @@ jobs:
           # Install required packages
           sudo apt-get update
           sudo apt-get install -y build-essential mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 pkg-config perl wget ca-certificates
-      
+
           OPENSSL_VER=3.1.3
           wget https://www.openssl.org/source/openssl-$OPENSSL_VER.tar.gz
           tar xf openssl-$OPENSSL_VER.tar.gz
           pushd openssl-$OPENSSL_VER
-      
+
           # Configure cross-compile
           ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- \
             --prefix=/usr/x86_64-w64-mingw32
-          
+
           # Build static libraries
           make -j$(nproc)
-          
+
           # Install to user-writable DESTDIR
           make DESTDIR=$HOME/win-openssl install_sw
           popd
-          
+
           # Set environment variables for openssl-sys
           echo "OPENSSL_DIR=$HOME/win-openssl/usr/x86_64-w64-mingw32" >> $GITHUB_ENV
           echo "OPENSSL_LIB_DIR=$HOME/win-openssl/usr/x86_64-w64-mingw32/lib64" >> $GITHUB_ENV
           echo "OPENSSL_INCLUDE_DIR=$HOME/win-openssl/usr/x86_64-w64-mingw32/include" >> $GITHUB_ENV
-          
+
           # For pkg-config
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
           echo "PKG_CONFIG_LIBDIR=$HOME/win-openssl/usr/x86_64-w64-mingw32/lib64/pkgconfig" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$HOME/win-openssl/usr/x86_64-w64-mingw32/lib64/pkgconfig" >> $GITHUB_ENV
-          
+
       - name: Set up Rust (nightly)
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly-2025-07-04
+          toolchain: nightly
 
       - name: Install Rust target
         run: rustup target add ${{ matrix.target }}
@@ -154,7 +154,7 @@ jobs:
             ~/.cargo/git
           key: ${{ matrix.os_name }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-              ${{ matrix.os_name }}-cargo-registry-
+            ${{ matrix.os_name }}-cargo-registry-
 
       - name: Cache Cargo build
         uses: actions/cache@v4

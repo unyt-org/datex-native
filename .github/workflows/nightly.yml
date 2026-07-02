@@ -1,273 +1,273 @@
 name: Nightly Build
 
 on:
-    workflow_dispatch: {}
+  workflow_dispatch: {}
 
-    schedule:
-        - cron: "0 0 * * *"
+  schedule:
+    - cron: "0 0 * * *"
 
-    pull_request:
-        types: [labeled, synchronize] # TODO: Remove synchronize
+  pull_request:
+    types: [labeled, synchronize] # TODO: Remove synchronize
 
 jobs:
-    get-ref:
-        name: Get nightly ref
-        runs-on: ubuntu-latest
-        outputs:
-            ref: ${{ steps.choose.outputs.ref }}
-            tag_suffix: ${{ steps.choose.outputs.tag_suffix }}
+  get-ref:
+    name: Get nightly ref
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.choose.outputs.ref }}
+      tag_suffix: ${{ steps.choose.outputs.tag_suffix }}
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-            - name: Install Deno
-              uses: denoland/setup-deno@v2
-              with:
-                  deno-version: v2.x
-            - name: Get latest commit hash
-              id: choose
-              run: |
-                  set -eo pipefail
-                  .github/tools/get-nightly-ref.ts
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GITHUB_REPOSITORY: ${{ github.repository }}
-            - name: Check pull request ref
-              if: github.event_name == 'pull_request'
-              run: |
-                  set -eo pipefail
-                  echo "Checking if the pull request ref matches the expected ref..."
-                  echo "Expected ref: ${{ steps.choose.outputs.ref }}"
-                  echo "Pull request head ref commit sha: ${{ github.event.pull_request.head.sha }}"
-                  if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.sha }}" != "${{ steps.choose.outputs.ref }}" ]]; then
-                    echo "Pull request ref does not match the expected ref. Aborting."
-                    exit 1
-                  fi
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Get latest commit hash
+        id: choose
+        run: |
+          set -eo pipefail
+          .github/tools/get-nightly-ref.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Check pull request ref
+        if: github.event_name == 'pull_request'
+        run: |
+          set -eo pipefail
+          echo "Checking if the pull request ref matches the expected ref..."
+          echo "Expected ref: ${{ steps.choose.outputs.ref }}"
+          echo "Pull request head ref commit sha: ${{ github.event.pull_request.head.sha }}"
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.sha }}" != "${{ steps.choose.outputs.ref }}" ]]; then
+            echo "Pull request ref does not match the expected ref. Aborting."
+            exit 1
+          fi
 
-    build:
-        needs: get-ref
-        strategy:
-            matrix:
-                include:
-                    # Linux
-                    - target: x86_64-unknown-linux-gnu
-                      os_name: linux-x86_64
-                      run_on: ubuntu-latest
-                      ext: ''
-                    # macOS
-                    #   - target: x86_64-apple-darwin
-                    #     os_name: macos-x86_64
-                    #     run_on: macos-latest
-                    #     ext: ''
-                    - target: aarch64-apple-darwin
-                      os_name: macos-aarch64
-                      run_on: macos-latest
-                      ext: ""
-                    # Windows
-                #   - target: x86_64-pc-windows-gnu
-                #     os_name: windows-x86_64
-                #     run_on: ubuntu-latest
-                #     ext: '.exe'
-        runs-on: ${{ matrix.run_on }}
-        name: Build on ${{ matrix.target }}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: ${{ needs.get-ref.outputs.ref }}
+  build:
+    needs: get-ref
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - target: x86_64-unknown-linux-gnu
+            os_name: linux-x86_64
+            run_on: ubuntu-latest
+            ext: ""
+          # macOS
+          #   - target: x86_64-apple-darwin
+          #     os_name: macos-x86_64
+          #     run_on: macos-latest
+          #     ext: ''
+          - target: aarch64-apple-darwin
+            os_name: macos-aarch64
+            run_on: macos-latest
+            ext: ""
+          # Windows
+        #   - target: x86_64-pc-windows-gnu
+        #     os_name: windows-x86_64
+        #     run_on: ubuntu-latest
+        #     ext: '.exe'
+    runs-on: ${{ matrix.run_on }}
+    name: Build on ${{ matrix.target }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-ref.outputs.ref }}
 
-            - name: Install libudev development package
-              if: matrix.run_on == 'ubuntu-latest'
-              run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - name: Install libudev development package
+        if: matrix.run_on == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
 
-            - name: Install compilation tools for Windows
-              if: matrix.target == 'x86_64-pc-windows-gnu'
-              run: sudo apt-get update && sudo apt-get install -y mingw-w64
+      - name: Install compilation tools for Windows
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
 
-            - name: Install the Apple certificate, provisioning profile, and API key (macOS)
-              if: contains(matrix.target, 'apple-darwin')
-              id: keychain
-              env:
-                APPLE_CODESIGN_KEY: ${{ secrets.APPLE_CODESIGN_KEY }}
-                APPLE_CODESIGN_PASSWORD: ${{ secrets.APPLE_CODESIGN_PASSWORD }}
-                APPLE_PROVISION_PROFILE: ${{ secrets.APPLE_PROVISION_PROFILE }}
-                APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
-                APPLE_AUTH_KEY: ${{ secrets.APPLE_AUTH_KEY }}
-              run: |
-                # create variables
-                CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-                PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
-                KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-                AUTH_KEY_PATH=$RUNNER_TEMP/AuthKey.p8
+      - name: Install the Apple certificate, provisioning profile, and API key (macOS)
+        if: contains(matrix.target, 'apple-darwin')
+        id: keychain
+        env:
+          APPLE_CODESIGN_KEY: ${{ secrets.APPLE_CODESIGN_KEY }}
+          APPLE_CODESIGN_PASSWORD: ${{ secrets.APPLE_CODESIGN_PASSWORD }}
+          APPLE_PROVISION_PROFILE: ${{ secrets.APPLE_PROVISION_PROFILE }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+          APPLE_AUTH_KEY: ${{ secrets.APPLE_AUTH_KEY }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          AUTH_KEY_PATH=$RUNNER_TEMP/AuthKey.p8
 
-                # import certificate and provisioning profile from secrets
-                echo -n "$APPLE_CODESIGN_KEY" | base64 --decode -o $CERTIFICATE_PATH
-                echo -n "$APPLE_PROVISION_PROFILE" | base64 --decode -o $PP_PATH
+          # import certificate and provisioning profile from secrets
+          echo -n "$APPLE_CODESIGN_KEY" | base64 --decode -o $CERTIFICATE_PATH
+          echo -n "$APPLE_PROVISION_PROFILE" | base64 --decode -o $PP_PATH
 
-                # create temporary keychain
-                security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-                security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-                security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          # create temporary keychain
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-                # import certificate to keychain
-                security import $CERTIFICATE_PATH -P "$APPLE_CODESIGN_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-                security set-key-partition-list -S apple-tool:,apple: -k "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-                security list-keychain -d user -s $KEYCHAIN_PATH
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$APPLE_CODESIGN_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$APPLE_KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
 
-                # apply provisioning profile
-                mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-                cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+          # apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
 
-                # create auth key file for notarization
-                echo -n "$APPLE_AUTH_KEY" | base64 --decode -o $AUTH_KEY_PATH
+          # create auth key file for notarization
+          echo -n "$APPLE_AUTH_KEY" | base64 --decode -o $AUTH_KEY_PATH
 
-                # setup outputs
-                echo "auth_key_path=$AUTH_KEY_PATH" >> $GITHUB_OUTPUT
-                echo "keychain_path=$KEYCHAIN_PATH" >> $GITHUB_OUTPUT
-                echo "pp_path=$PP_PATH" >> $GITHUB_OUTPUT
-                echo "certificate_path=$CERTIFICATE_PATH" >> $GITHUB_OUTPUT
+          # setup outputs
+          echo "auth_key_path=$AUTH_KEY_PATH" >> $GITHUB_OUTPUT
+          echo "keychain_path=$KEYCHAIN_PATH" >> $GITHUB_OUTPUT
+          echo "pp_path=$PP_PATH" >> $GITHUB_OUTPUT
+          echo "certificate_path=$CERTIFICATE_PATH" >> $GITHUB_OUTPUT
 
-            - name: Set up Rust (nightly)
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  toolchain: nightly-2025-07-04
+      - name: Set up Rust (nightly)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
 
-            - name: Install Rust target
-              run: rustup target add ${{ matrix.target }}
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
 
-            - name: Cache Cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                  key: ${{ matrix.os_name }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: |
-                      ${{ matrix.os_name }}-cargo-registry-
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.os_name }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.os_name }}-cargo-registry-
 
-            - name: Cache Cargo build
-              uses: actions/cache@v4
-              with:
-                  path: target
-                  key: ${{ matrix.os_name }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: |
-                      ${{ matrix.os_name }}-cargo-build-
+      - name: Cache Cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ matrix.os_name }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.os_name }}-cargo-build-
 
-            - name: Build binary
-              run: |
-                  cargo build --release --target=${{ matrix.target }}
+      - name: Build binary
+        run: |
+          cargo build --release --target=${{ matrix.target }}
 
-            - name: Sign binary (macOS)
-              if: contains(matrix.target, 'apple-darwin')
-              env:
-                CODESIGN_IDENTITY: "YQGEQT9JE6"
-                CODESIGN_PREFIX: "org.unyt.datex."
-              run: |
-                codesign --sign "$CODESIGN_IDENTITY" \
-                  --entitlements ./cli/entitlements.plist \
-                  --prefix "$CODESIGN_PREFIX" \
-                  --options runtime target/${{ matrix.target }}/release/datex
+      - name: Sign binary (macOS)
+        if: contains(matrix.target, 'apple-darwin')
+        env:
+          CODESIGN_IDENTITY: "YQGEQT9JE6"
+          CODESIGN_PREFIX: "org.unyt.datex."
+        run: |
+          codesign --sign "$CODESIGN_IDENTITY" \
+            --entitlements ./cli/entitlements.plist \
+            --prefix "$CODESIGN_PREFIX" \
+            --options runtime target/${{ matrix.target }}/release/datex
 
-            - name: Zip the binary for notarization (macOS)
-              if: contains(matrix.target, 'apple-darwin')
-              run: zip -r $RUNNER_TEMP/datex-signed.zip target/${{ matrix.target }}/release/datex
+      - name: Zip the binary for notarization (macOS)
+        if: contains(matrix.target, 'apple-darwin')
+        run: zip -r $RUNNER_TEMP/datex-signed.zip target/${{ matrix.target }}/release/datex
 
-            - name: Upload the binary for notarization (macOS)
-              if: contains(matrix.target, 'apple-darwin')
-              env:
-                APPLE_APP_STORE_KEY_ID: ${{ secrets.APPLE_APP_STORE_KEY_ID }}
-                APPLE_APP_STORE_ISSUER: ${{ secrets.APPLE_APP_STORE_ISSUER }}
-              run: |
-                xcrun notarytool submit $RUNNER_TEMP/datex-signed.zip \
-                  --key "${{ steps.keychain.outputs.auth_key_path }}" \
-                  --key-id "$APPLE_APP_STORE_KEY_ID" \
-                  --issuer "$APPLE_APP_STORE_ISSUER" \
-                  --wait
-            - name: Check notarization
-              if: contains(matrix.target, 'apple-darwin')
-              run: |
-                codesign -vvvv -R="notarized" --check-notarization target/${{ matrix.target }}/release/datex
-                spctl -a -vvv -t install target/${{ matrix.target }}/release/datex
-            # - name: Install Deno
-            #   uses: denoland/setup-deno@v2
-            #   with:
-            #       deno-version: v2.x
+      - name: Upload the binary for notarization (macOS)
+        if: contains(matrix.target, 'apple-darwin')
+        env:
+          APPLE_APP_STORE_KEY_ID: ${{ secrets.APPLE_APP_STORE_KEY_ID }}
+          APPLE_APP_STORE_ISSUER: ${{ secrets.APPLE_APP_STORE_ISSUER }}
+        run: |
+          xcrun notarytool submit $RUNNER_TEMP/datex-signed.zip \
+            --key "${{ steps.keychain.outputs.auth_key_path }}" \
+            --key-id "$APPLE_APP_STORE_KEY_ID" \
+            --issuer "$APPLE_APP_STORE_ISSUER" \
+            --wait
+      - name: Check notarization
+        if: contains(matrix.target, 'apple-darwin')
+        run: |
+          codesign -vvvv -R="notarized" --check-notarization target/${{ matrix.target }}/release/datex
+          spctl -a -vvv -t install target/${{ matrix.target }}/release/datex
+      # - name: Install Deno
+      #   uses: denoland/setup-deno@v2
+      #   with:
+      #       deno-version: v2.x
 
-            # - name: Install Code Signing Tools
-            #   id: install_sign_tools
-            #   if: contains(matrix.target, 'apple-darwin')
-            #   run: |
-            #       set -eo pipefail
-            #       .github/tools/install-codesign.ts
-            #   env:
-            #       VERSION: 0.29.0
-            #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            # # --for-notarization
-            # - name: Apple Code Signing
-            #   if: contains(matrix.target, 'apple-darwin')
-            #   run: |
-            #       echo $APPLE_APP_STORE_CONNECT_KEY > key.json
-            #       echo "Key is $(echo $APPLE_CODESIGN_KEY | base64 -d | wc -c) bytes"
-            #       ${{ steps.install_sign_tools.outputs.rcodesign_path }} sign target/${{ matrix.target }}/release/datex --code-signature-flags=runtime --p12-password="$APPLE_CODESIGN_PASSWORD" --p12-file=<(echo $APPLE_CODESIGN_KEY | base64 -d) --entitlements-xml-file=cli/entitlements.plist
-            #       ${{ steps.install_sign_tools.outputs.rcodesign_path }} notary-submit --api-key-file key.json --staple target/${{ matrix.target }}/release/datex
+      # - name: Install Code Signing Tools
+      #   id: install_sign_tools
+      #   if: contains(matrix.target, 'apple-darwin')
+      #   run: |
+      #       set -eo pipefail
+      #       .github/tools/install-codesign.ts
+      #   env:
+      #       VERSION: 0.29.0
+      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # # --for-notarization
+      # - name: Apple Code Signing
+      #   if: contains(matrix.target, 'apple-darwin')
+      #   run: |
+      #       echo $APPLE_APP_STORE_CONNECT_KEY > key.json
+      #       echo "Key is $(echo $APPLE_CODESIGN_KEY | base64 -d | wc -c) bytes"
+      #       ${{ steps.install_sign_tools.outputs.rcodesign_path }} sign target/${{ matrix.target }}/release/datex --code-signature-flags=runtime --p12-password="$APPLE_CODESIGN_PASSWORD" --p12-file=<(echo $APPLE_CODESIGN_KEY | base64 -d) --entitlements-xml-file=cli/entitlements.plist
+      #       ${{ steps.install_sign_tools.outputs.rcodesign_path }} notary-submit --api-key-file key.json --staple target/${{ matrix.target }}/release/datex
 
-            #   env:
-            #       APPLE_CODESIGN_KEY: "${{ secrets.APPLE_CODESIGN_KEY }}"
-            #       APPLE_CODESIGN_PASSWORD: "${{ secrets.APPLE_CODESIGN_PASSWORD }}"
-            #       APPLE_APP_STORE_CONNECT_KEY: "${{ secrets.APPLE_APP_STORE_CONNECT_KEY }}"
-            - name: Package binary
-              run: |
-                  mkdir -p dist
-                  TARGET_DIR=target/${{ matrix.target }}/release
-                  OUTPUT_NAME=datex-${{ matrix.target }}
-                  cp ${TARGET_DIR}/datex${{ matrix.ext }} dist/datex${{ matrix.ext }}
-                  cd dist && zip ${OUTPUT_NAME}.zip datex${{ matrix.ext }}
-              shell: bash
+      #   env:
+      #       APPLE_CODESIGN_KEY: "${{ secrets.APPLE_CODESIGN_KEY }}"
+      #       APPLE_CODESIGN_PASSWORD: "${{ secrets.APPLE_CODESIGN_PASSWORD }}"
+      #       APPLE_APP_STORE_CONNECT_KEY: "${{ secrets.APPLE_APP_STORE_CONNECT_KEY }}"
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          TARGET_DIR=target/${{ matrix.target }}/release
+          OUTPUT_NAME=datex-${{ matrix.target }}
+          cp ${TARGET_DIR}/datex${{ matrix.ext }} dist/datex${{ matrix.ext }}
+          cd dist && zip ${OUTPUT_NAME}.zip datex${{ matrix.ext }}
+        shell: bash
 
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: ${{ matrix.os_name }}
-                  path: dist/datex-${{ matrix.target }}.zip
-        continue-on-error: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os_name }}
+          path: dist/datex-${{ matrix.target }}.zip
+    continue-on-error: true
 
-    release:
-        needs: [build, get-ref]
-        runs-on: ubuntu-latest
-        name: Update nighly artifacts
+  release:
+    needs: [build, get-ref]
+    runs-on: ubuntu-latest
+    name: Update nighly artifacts
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: ${{ needs.get-ref.outputs.ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-ref.outputs.ref }}
 
-            - name: Download artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: dist
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
 
-            - name: Publish/Update nightly release
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  set -eo pipefail
-                  TAG="nightly"
-                  TITLE="Nightly build ($(date -u +'%Y-%m-%d'))"
-                  TARGET="${{ needs.get-ref.outputs.ref }}"
-                  TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      - name: Publish/Update nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eo pipefail
+          TAG="nightly"
+          TITLE="Nightly build ($(date -u +'%Y-%m-%d'))"
+          TARGET="${{ needs.get-ref.outputs.ref }}"
+          TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-                  if gh release view "$TAG" >/dev/null 2>&1; then
-                    echo "Updating existing nightly release - clobbering assets"
-                    gh release upload  "$TAG" dist/**/*.zip --clobber
-                    gh release edit     "$TAG" --title "$TITLE" --prerelease \
-                                        --notes "Nightly build for $TARGET at $TIME" \
-                                        --target "$TARGET"
-                  else
-                    echo "Creating new nightly release"
-                    gh release create   "$TAG" dist/**/*.zip \
-                                        --title "$TITLE" --prerelease \
-                                        --target "$TARGET"
-                  fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing nightly release - clobbering assets"
+            gh release upload  "$TAG" dist/**/*.zip --clobber
+            gh release edit     "$TAG" --title "$TITLE" --prerelease \
+                                --notes "Nightly build for $TARGET at $TIME" \
+                                --target "$TARGET"
+          else
+            echo "Creating new nightly release"
+            gh release create   "$TAG" dist/**/*.zip \
+                                --title "$TITLE" --prerelease \
+                                --target "$TARGET"
+          fi
