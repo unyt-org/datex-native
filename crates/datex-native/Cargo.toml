@@ -14,12 +14,12 @@ license-file = "../../LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-datex-core = { version = "0.0.12", default-features = false, features = [
+datex-core = { path = "../../../datex/crates/datex-core", default-features = false, features = [
     "target_native",
     "decompiler",
     "syntax_highlighting_legacy",
     "compiler",
-    "allow_unsigned_blocks",
+    "crypto_enabled",
 ] }
 
 ed25519 = { version = "2.2.3", features = ["std"] }
