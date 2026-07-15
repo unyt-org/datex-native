@@ -4,7 +4,7 @@
         {
             type: "websocket-client",
             config: {
-                url: "ws://0.0.0.0:8042"
+                url: "ws://0.0.0.0:8043"
             },
             priority: #None
         }
