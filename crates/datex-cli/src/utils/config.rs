@@ -17,6 +17,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use datex_core::datex_proxy::DatexValueContainerProxyInfallibleSerializeWithoutContext;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -88,7 +89,7 @@ pub fn create_new_config_file(
     let mut config_path = base_path.clone();
     config_path.push(".datex");
     config_path.push(format!("{endpoint}.dx"));
-    let config = config.to_value_container();
+    let config = config.to_value_container_without_context();
     let datex_script = decompile_value(
         &config,
         DecompileOptions {
