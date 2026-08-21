@@ -17,8 +17,6 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use datex_core::datex_proxy::DatexValueContainerProxyInfallibleSerializeWithoutContext;
-use datex_core::traits::convert_value_container::ConvertValueContainer;
 
 #[derive(Debug)]
 pub enum ConfigError {
