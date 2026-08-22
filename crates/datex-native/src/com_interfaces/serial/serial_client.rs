@@ -29,6 +29,7 @@ use std::{
 use tokio::task::spawn_blocking;
 
 #[derive(Datex)]
+#[datex(structural_recursive)]
 pub struct SerialClientInterfaceSetupDataNative(
     pub SerialClientInterfaceSetupData,
 );

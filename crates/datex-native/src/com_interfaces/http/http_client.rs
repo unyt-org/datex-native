@@ -23,6 +23,7 @@ use datex_core::{
 };
 
 #[derive(Datex)]
+#[datex(structural_recursive)]
 pub struct HTTPClientInterfaceSetupDataNative(pub HTTPClientInterfaceSetupData);
 impl Deref for HTTPClientInterfaceSetupDataNative {
     type Target = HTTPClientInterfaceSetupData;

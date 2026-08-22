@@ -16,7 +16,7 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
         func: original_function,
         datex_core_namespace: "datex::core",
         setup: None,
-        init: Some(quote! {
+        init_scoped: Some(quote! {
             datex::flexi_logger::Logger::try_with_env_or_str("warn")
                    .unwrap_or_else(|_e| datex::flexi_logger::Logger::with(datex::flexi_logger::LogSpecification::warn()))
                    .log_to_stderr()
@@ -24,6 +24,7 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
                    .ok();
             datex::com_interfaces::register_native_interface_factories(&runtime.com_hub());
         }),
+        init_unscoped: None,
         pre_body: None,
         additional_attributes: vec![parse_quote! {#[tokio::main]}],
         custom_main_inputs: vec![],

@@ -34,6 +34,7 @@ use datex_core::{
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 #[derive(Datex)]
+#[datex(structural_recursive)]
 pub struct WebSocketClientInterfaceSetupDataNative(
     pub WebSocketClientInterfaceSetupData,
 );

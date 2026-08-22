@@ -29,6 +29,7 @@ use tokio_tungstenite::{WebSocketStream, accept_async};
 use tungstenite::Message;
 
 #[derive(Datex)]
+#[datex(structural_recursive)]
 pub struct WebSocketServerInterfaceSetupDataNative(
     pub WebSocketServerInterfaceSetupData,
 );
