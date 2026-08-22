@@ -29,6 +29,7 @@ use tokio::{
 };
 
 #[derive(Datex)]
+#[datex(structural_recursive)]
 pub struct TCPServerInterfaceSetupDataNative(pub TCPServerInterfaceSetupData);
 
 impl Deref for TCPServerInterfaceSetupDataNative {

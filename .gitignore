@@ -1,3 +1,4 @@
 target/
 .idea
 .cargo/config.toml
+.DS_Store
