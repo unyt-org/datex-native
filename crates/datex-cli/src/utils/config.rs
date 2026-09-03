@@ -1,6 +1,6 @@
 use colored::Colorize;
 use datex_core::{
-    decompiler::{DecompileOptions, FormattingOptions, decompile_value},
+    decompiler::{DecompileOptions, FormattingOptions},
     network::{
         com_hub::InterfacePriority,
         com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData,
