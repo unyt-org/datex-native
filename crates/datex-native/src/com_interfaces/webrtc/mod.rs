@@ -32,7 +32,7 @@ use webrtc::{
 };
 
 #[derive(Datex)]
-#[datex(structural_recursive)]
+#[datex(structural, no_deserialize)]
 pub struct WebRTCInterfaceSetupDataNative {
     pub setup: WebRTCInterfaceSetupData,
     #[datex(skip)]

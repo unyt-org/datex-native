@@ -1,9 +1,5 @@
 use colored::Colorize;
 use datex_core::{
-    datex_proxy::{
-        DatexValueContainerProxyDeserialize,
-        DatexValueContainerProxyInfallibleSerialize, DeserializationError,
-    },
     decompiler::{DecompileOptions, FormattingOptions, decompile_value},
     network::{
         com_hub::InterfacePriority,
@@ -17,6 +13,8 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
+use datex_core::values::value_container::ValueContainer;
 
 #[derive(Debug)]
 pub enum ConfigError {
