@@ -1,9 +1,5 @@
 use colored::Colorize;
 use datex_core::{
-    datex_proxy::{
-        DatexValueContainerProxyDeserialize,
-        DatexValueContainerProxyInfallibleSerialize, DeserializationError,
-    },
     decompiler::{DecompileOptions, FormattingOptions, decompile_value},
     network::{
         com_hub::InterfacePriority,
@@ -17,6 +13,8 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
+use datex_core::values::value_container::ValueContainer;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -88,7 +86,7 @@ pub fn create_new_config_file(
     let mut config_path = base_path.clone();
     config_path.push(".datex");
     config_path.push(format!("{endpoint}.dx"));
-    let config = config.to_value_container_without_cache();
+    let config = ValueContainer::from(config);
     let datex_script = decompile_value(
         &config,
         DecompileOptions {
