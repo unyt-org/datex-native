@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 clap = { version = "4.0.23", features = ["derive"] }
-datex-core = { version = "0.0.10", default-features = false, features = [
+datex-core = { version = "0.0.12", default-features = false, features = [
     "target_native",
     "decompiler",
     "syntax_highlighting_legacy",
