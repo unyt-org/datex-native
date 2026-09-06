@@ -141,7 +141,7 @@ jobs:
       - name: Set up Rust (nightly)
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly-2025-07-04
+          toolchain: nightly-2026-09-06
 
       - name: Install Rust target
         run: rustup target add ${{ matrix.target }}
