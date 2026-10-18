@@ -1,12 +1,13 @@
 use datex_core::{
     decompiler::{
-        DecompileOptions, FormattingMode, FormattingOptions, decompile_value,
+        DecompileOptions, FormattingMode, FormattingOptions,
     },
     lsp::create_lsp,
     runtime::{RuntimeConfig, RuntimeRunner},
     values::core_values::endpoint::Endpoint,
 };
 use std::path::PathBuf;
+use datex_core::decompiler::ast_to_source_code::value_to_source_code;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 mod command_line_args;
@@ -79,7 +80,7 @@ async fn execute_file(run: command_line_args::Run) {
             } else {
                 let result = _result.unwrap();
                 if let Some(output) = result {
-                    let formatted_output = decompile_value(
+                    let formatted_output = value_to_source_code(
                         &output,
                         DecompileOptions {
                             formatting_options: FormattingOptions {
