@@ -210,7 +210,7 @@ fn repl_loop(
     history_cache_path.push("repl-history.txt");
 
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
-    rl.load_history(&history_cache_path).is_ok();
+    rl.load_history(&history_cache_path)?;
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);

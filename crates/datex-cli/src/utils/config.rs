@@ -15,7 +15,6 @@ use std::{
 };
 use datex_core::decompiler::ast_to_source_code::value_to_source_code;
 use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
-use datex_core::values::value_container::ValueContainer;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -88,10 +87,10 @@ pub fn create_new_config_file(
     config_path.push(".datex");
     config_path.push(format!("{endpoint}.dx"));
     let config = config.to_value_container();
-    let datex_script = decompile_value(
+    let datex_script = value_to_source_code(
         &config,
         DecompileOptions {
-            formatting_options: FormattingOptions::default(),
+            formatting_options: FormattingOptions::pretty(),
             ..DecompileOptions::default()
         },
     );
