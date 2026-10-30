@@ -24,7 +24,7 @@ use tokio::{
 };
 
 #[derive(Datex)]
-#[datex(structural_recursive)]
+#[datex(structural)]
 pub struct TCPClientInterfaceSetupDataNative(pub TCPClientInterfaceSetupData);
 impl Deref for TCPClientInterfaceSetupDataNative {
     type Target = TCPClientInterfaceSetupData;

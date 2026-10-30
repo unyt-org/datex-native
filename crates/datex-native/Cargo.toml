@@ -17,9 +17,11 @@ crate-type = ["cdylib", "rlib"]
 datex-core = { version = "0.0.13", default-features = false, features = [
     "target_native",
     "decompiler",
+    "disassembler",
     "syntax_highlighting_legacy",
     "compiler",
     "allow_unsigned_blocks",
+    "value_display"
 ] }
 
 ed25519 = { version = "2.2.3", features = ["std"] }
@@ -52,6 +54,7 @@ rustls = { version = "0.23.41", optional = true, default-features = false, featu
     "tls12",
     "ring",
 ] }
+linkme = "0.3.37"
 
 [features]
 http = ["dep:async_tiny", "dep:reqwest"]

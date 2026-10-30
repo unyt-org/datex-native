@@ -1,10 +1,6 @@
 use colored::Colorize;
 use datex_core::{
-    datex_proxy::{
-        DatexValueContainerProxyDeserialize,
-        DatexValueContainerProxyInfallibleSerialize, DeserializationError,
-    },
-    decompiler::{DecompileOptions, FormattingOptions, decompile_value},
+    decompiler::{DecompileOptions, FormattingOptions},
     network::{
         com_hub::InterfacePriority,
         com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData,
@@ -17,6 +13,8 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -88,11 +86,11 @@ pub fn create_new_config_file(
     let mut config_path = base_path.clone();
     config_path.push(".datex");
     config_path.push(format!("{endpoint}.dx"));
-    let config = config.to_value_container_without_cache();
-    let datex_script = decompile_value(
+    let config = config.to_value_container();
+    let datex_script = value_to_source_code(
         &config,
         DecompileOptions {
-            formatting_options: FormattingOptions::default(),
+            formatting_options: FormattingOptions::pretty(),
             ..DecompileOptions::default()
         },
     );

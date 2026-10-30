@@ -23,6 +23,7 @@ datex-core = { version = "0.0.13", default-features = false, features = [
     "compiler",
     "lsp_tokio",
     "allow_unsigned_blocks",
+    "value_display"
 ] }
 datex-native = { path = "../datex-native", version = "0.0.12" }
 

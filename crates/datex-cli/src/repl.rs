@@ -5,7 +5,6 @@ use crate::utils::{
 use datex_core::{
     decompiler::{
         DecompileOptions, FormattingMode, FormattingOptions,
-        apply_syntax_highlighting, decompile_value,
     },
     runtime::{
         Runtime,
@@ -26,6 +25,8 @@ use rustyline::{
     validate::{ValidationContext, ValidationResult, Validator},
 };
 use std::{path::PathBuf, str::FromStr, thread::spawn};
+use datex_core::decompiler::ast_to_source_code::apply_syntax_highlighting::apply_syntax_highlighting;
+use datex_core::decompiler::ast_to_source_code::value_to_source_code;
 
 struct DatexSyntaxHelper;
 
@@ -156,12 +157,11 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                     }
 
                     else if let Some(result) = result.unwrap() {
-                        let decompiled_value = decompile_value(&result, DecompileOptions {
+                        let decompiled_value = value_to_source_code(&result, DecompileOptions {
                             formatting_options: FormattingOptions {
                                 mode: FormattingMode::pretty(),
                                 json_compat: false,
                                 colorized: true,
-                                add_variant_suffix: true
                             },
                             resolve_slots: true,
                         });
@@ -209,7 +209,7 @@ fn repl_loop(
     history_cache_path.push("repl-history.txt");
 
     let mut rl = rustyline::Editor::<DatexSyntaxHelper, _>::new()?;
-    rl.load_history(&history_cache_path).is_ok();
+    rl.load_history(&history_cache_path)?;
     rl.set_helper(Some(DatexSyntaxHelper));
     rl.enable_bracketed_paste(true);
     rl.set_auto_add_history(true);
