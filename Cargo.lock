@@ -930,6 +930,7 @@ dependencies = [
  "hex",
  "indexmap 2.14.1",
  "internment",
+ "inventory",
  "itertools 0.14.0",
  "linkme",
  "log",
@@ -2052,6 +2053,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "636d4b0f6a39fd684effe2a73f5310df16a3fa7954c26d36833e98f44d1977a2"
 dependencies = [
  "hashbrown 0.15.5",
+]
+
+[[package]]
+name = "inventory"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6928282826c822ad91bf1c9a1cb90a30ba1c26770749929b4656cd6be829cd7c"
+dependencies = [
+ "rustversion",
 ]
 
 [[package]]

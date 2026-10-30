@@ -162,7 +162,6 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                                 mode: FormattingMode::pretty(),
                                 json_compat: false,
                                 colorized: true,
-                                add_variant_suffix: true
                             },
                             resolve_slots: true,
                         });

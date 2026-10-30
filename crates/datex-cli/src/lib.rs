@@ -86,7 +86,6 @@ async fn execute_file(run: command_line_args::Run) {
                             formatting_options: FormattingOptions {
                                 mode: FormattingMode::pretty(),
                                 colorized: true,
-                                add_variant_suffix: true,
                                 ..FormattingOptions::default()
                             },
                             ..DecompileOptions::default()
