@@ -1,5 +1,6 @@
 {
     endpoint: @server,
+    name: "Example Native Server",
     interfaces: [
         {
             type: "websocket-server",
