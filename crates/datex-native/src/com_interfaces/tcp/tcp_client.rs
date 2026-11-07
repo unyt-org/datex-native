@@ -18,6 +18,7 @@ use datex_core::network::{
 use futures_util::lock::Mutex;
 use log::{error, warn};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
@@ -86,6 +87,7 @@ impl TCPClientInterfaceSetupDataNative {
                                 error!("WebSocket write error: {e}");
                                 SendFailure(Box::new(block))
                             })
+                            .map(|_| SendSuccess::Sent)
                     }
                 }),
             ),

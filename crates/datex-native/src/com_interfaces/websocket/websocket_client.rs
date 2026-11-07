@@ -31,6 +31,7 @@ use datex_core::{
         },
     },
 };
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 #[derive(Datex)]
@@ -95,6 +96,7 @@ impl WebSocketClientInterfaceSetupDataNative {
                                 error!("WebSocket write error: {e}");
                                 SendFailure(Box::new(block))
                             })
+                            .map(|_| SendSuccess::Sent)
                     }
                 }),
             ),

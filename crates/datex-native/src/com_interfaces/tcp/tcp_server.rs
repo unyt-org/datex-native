@@ -20,6 +20,7 @@ use datex_core::{
 use futures::lock::Mutex;
 use log::{error, info, warn};
 use std::{io, net::SocketAddr, ops::Deref, sync::Arc};
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{
@@ -114,6 +115,7 @@ impl TCPServerInterfaceSetupDataNative {
                                                     );
                                                     SendFailure(Box::new(block))
                                                 })
+                                                .map(|_| SendSuccess::Sent)
                                         }
                                     },
                                 ),

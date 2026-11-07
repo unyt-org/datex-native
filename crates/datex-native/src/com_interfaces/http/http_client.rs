@@ -21,6 +21,7 @@ use datex_core::{
         },
     },
 };
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 
 #[derive(Datex)]
 #[datex(structural)]
@@ -76,7 +77,7 @@ impl HTTPClientInterfaceSetupDataNative {
                         response_sender.start_send(bytes.to_vec()).unwrap();
 
                         if status.is_success() {
-                            Ok(())
+                            Ok(SendSuccess::Sent)
                         } else {
                             println!(
                                 "HTTP request failed with status: {}",
