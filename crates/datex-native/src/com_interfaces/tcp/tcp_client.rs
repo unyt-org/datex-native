@@ -19,6 +19,7 @@ use futures_util::lock::Mutex;
 use log::{error, warn};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
 use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
@@ -53,6 +54,7 @@ impl TCPClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(self.0.address),
+                reconnection_config: ReconnectionConfig::reconnect(),
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(

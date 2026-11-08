@@ -32,6 +32,7 @@ use datex_core::{
     },
 };
 use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 #[derive(Datex, Clone)]
@@ -58,6 +59,7 @@ impl WebSocketClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(self.url.clone()),
+                reconnection_config: ReconnectionConfig::reconnect(),
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(

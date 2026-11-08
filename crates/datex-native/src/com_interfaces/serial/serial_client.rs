@@ -26,6 +26,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio::task::spawn_blocking;
 
 #[derive(Datex, Clone)]
@@ -77,6 +78,7 @@ impl SerialClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(port_name),
+                reconnection_config: ReconnectionConfig::reconnect(),
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(
