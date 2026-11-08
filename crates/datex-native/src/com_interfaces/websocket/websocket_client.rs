@@ -59,7 +59,6 @@ impl WebSocketClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(self.url.clone()),
-                reconnection_config: ReconnectionConfig::reconnect(),
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(

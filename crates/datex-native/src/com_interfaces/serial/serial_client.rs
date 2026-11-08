@@ -78,7 +78,6 @@ impl SerialClientInterfaceSetupDataNative {
         Ok(ComInterfaceConfiguration::new_single_socket(
             ComInterfaceProperties {
                 name: Some(port_name),
-                reconnection_config: ReconnectionConfig::reconnect(),
                 ..Self::get_default_properties()
             },
             SocketConfiguration::new_in_out(
