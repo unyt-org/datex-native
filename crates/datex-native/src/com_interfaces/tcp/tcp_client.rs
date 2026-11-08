@@ -24,7 +24,7 @@ use tokio::{
     net::TcpStream,
 };
 
-#[derive(Datex)]
+#[derive(Datex, Clone)]
 #[datex(structural)]
 pub struct TCPClientInterfaceSetupDataNative(pub TCPClientInterfaceSetupData);
 impl Deref for TCPClientInterfaceSetupDataNative {

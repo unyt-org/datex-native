@@ -21,7 +21,7 @@ use datex_core::{
     },
 };
 
-#[derive(Datex)]
+#[derive(Datex, Clone)]
 #[datex(structural)]
 pub struct HTTPServerInterfaceSetupDataNative(pub HTTPServerInterfaceSetupData);
 impl Deref for HTTPServerInterfaceSetupDataNative {

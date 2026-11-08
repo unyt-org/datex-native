@@ -23,7 +23,7 @@ use datex_core::{
 };
 use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 
-#[derive(Datex)]
+#[derive(Datex, Clone)]
 #[datex(structural)]
 pub struct HTTPClientInterfaceSetupDataNative(pub HTTPClientInterfaceSetupData);
 impl Deref for HTTPClientInterfaceSetupDataNative {

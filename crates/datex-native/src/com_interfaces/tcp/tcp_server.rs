@@ -29,7 +29,7 @@ use tokio::{
     },
 };
 
-#[derive(Datex)]
+#[derive(Datex, Clone)]
 #[datex(structural)]
 pub struct TCPServerInterfaceSetupDataNative(pub TCPServerInterfaceSetupData);
 

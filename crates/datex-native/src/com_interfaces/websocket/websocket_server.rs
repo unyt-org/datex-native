@@ -29,7 +29,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{WebSocketStream, accept_async};
 use tungstenite::Message;
 
-#[derive(Datex)]
+#[derive(Datex, Clone)]
 #[datex(structural)]
 pub struct WebSocketServerInterfaceSetupDataNative(
     pub WebSocketServerInterfaceSetupData,
