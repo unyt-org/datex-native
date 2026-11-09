@@ -26,3 +26,7 @@ tokio = { version = "1.17.0", features = ["full"] }
 
 [build-dependencies]
 serde_json = "1.0.145"
+
+
+[features]
+debug_dhat = ["datex-native/debug_dhat"]
