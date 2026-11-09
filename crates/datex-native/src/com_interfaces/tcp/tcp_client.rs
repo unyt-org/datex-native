@@ -104,6 +104,10 @@ impl ComInterfaceAsyncFactory for TCPClientInterfaceSetupDataNative {
     fn get_default_properties() -> ComInterfaceProperties {
         TCPClientInterfaceSetupData::get_default_properties()
     }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        TCPClientInterfaceSetupData::get_reconnection_config()
+    }
 }
 
 #[cfg(test)]

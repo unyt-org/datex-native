@@ -146,4 +146,8 @@ impl ComInterfaceAsyncFactory for WebSocketClientInterfaceSetupDataNative {
     fn get_default_properties() -> ComInterfaceProperties {
         WebSocketClientInterfaceSetupData::get_default_properties()
     }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        WebSocketClientInterfaceSetupData::get_reconnection_config()
+    }
 }

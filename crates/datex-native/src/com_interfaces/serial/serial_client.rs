@@ -132,4 +132,8 @@ impl ComInterfaceAsyncFactory for SerialClientInterfaceSetupDataNative {
     fn get_default_properties() -> ComInterfaceProperties {
         SerialClientInterfaceSetupData::get_default_properties()
     }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        SerialClientInterfaceSetupData::get_reconnection_config()
+    }
 }
