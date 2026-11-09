@@ -17,3 +17,6 @@ proc-macro = true
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 datex-macro-utils = { version = "0.0.1" }
+
+[features]
+debug_dhat = ["datex-macro-utils/debug_dhat"]

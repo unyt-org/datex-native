@@ -29,4 +29,5 @@ serde_json = "1.0.145"
 
 
 [features]
-debug_dhat = ["datex-native/debug_dhat"]
+debug_dhat = ["datex-native/debug_dhat", "datex-native-macros/debug_dhat"]
+value_display = ["datex-native/value_display"]

@@ -21,7 +21,6 @@ datex-core = { version = "0.0.13", default-features = false, features = [
     "syntax_highlighting_legacy",
     "compiler",
     "allow_unsigned_blocks",
-    "value_display",
 ] }
 
 ed25519 = { version = "2.2.3", features = ["std"] }
@@ -64,5 +63,6 @@ tcp = []
 webrtc = ["dep:webrtc", "dep:rustls"]
 
 debug_dhat = ["datex-core/debug_dhat"]
+value_display = ["datex-core/value_display"]
 
 default = ["http", "websocket", "serial", "tcp", "webrtc"]
