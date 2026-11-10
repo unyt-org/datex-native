@@ -8,6 +8,7 @@ use datex_core::{
 };
 use std::path::PathBuf;
 use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::runtime::execution::context::ExecutionContext;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 mod command_line_args;
@@ -74,7 +75,7 @@ async fn execute_file(run: command_line_args::Run) {
         run_runtime_with_config(run.config.as_ref(), false, async |runtime| {
             let file_contents =
                 std::fs::read_to_string(file).expect("Could not read file");
-            let _result = runtime.execute(&file_contents, &[], None).await;
+            let _result = runtime.execute(&file_contents, &[], None::<ExecutionContext>).await;
             if let Err(e) = _result {
                 eprintln!("{}", e);
             } else {
