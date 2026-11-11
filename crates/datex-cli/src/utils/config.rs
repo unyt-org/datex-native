@@ -155,7 +155,7 @@ where
     config.load_host_env_vars();
 
     let runner = RuntimeRunner::new(config, CustomRuntimeInfo {
-        device_type: Some("datex-cli".to_string()),
+        device_type: Some("native".to_string()),
         ..Default::default()
     });
     register_native_interface_factories(&runner.runtime.com_hub());
