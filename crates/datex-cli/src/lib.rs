@@ -8,6 +8,7 @@ use datex_core::{
 };
 use std::path::PathBuf;
 use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::runtime::CustomRuntimeInfo;
 use datex_core::runtime::execution::context::ExecutionContext;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
@@ -41,9 +42,13 @@ pub async fn run() {
                 let stdin = tokio::io::stdin().compat();
                 let stdout = tokio::io::stdout().compat_write();
 
-                RuntimeRunner::new(RuntimeConfig::new_with_endpoint(
-                    Endpoint::default(),
-                ))
+                RuntimeRunner::new(
+                    RuntimeConfig::new_with_endpoint(Endpoint::default()),
+                    CustomRuntimeInfo {
+                        device_type: Some("datex-lsp".to_string()),
+                        ..Default::default()
+                    }
+                )
                 .run(async |runtime| {
                     create_lsp(runtime, stdin, stdout).await;
                 })

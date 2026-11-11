@@ -14,6 +14,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::runtime::CustomRuntimeInfo;
 use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
 
 #[derive(Debug)]
@@ -153,7 +154,10 @@ where
     let mut config = get_config(custom_config_path, &Runtime::stub())?;
     config.load_host_env_vars();
 
-    let runner = RuntimeRunner::new(config);
+    let runner = RuntimeRunner::new(config, CustomRuntimeInfo {
+        device_type: Some("datex-cli".to_string()),
+        ..Default::default()
+    });
     register_native_interface_factories(&runner.runtime.com_hub());
 
     Ok(runner
