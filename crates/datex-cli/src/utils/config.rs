@@ -154,8 +154,10 @@ where
     let mut config = get_config(custom_config_path, &Runtime::stub())?;
     config.load_host_env_vars();
 
+    let device_info = os_info::get();
+
     let runner = RuntimeRunner::new(config, CustomRuntimeInfo {
-        device_type: Some("native".to_string()),
+        device_type: Some(device_info.to_string()),
         ..Default::default()
     });
     register_native_interface_factories(&runner.runtime.com_hub());
