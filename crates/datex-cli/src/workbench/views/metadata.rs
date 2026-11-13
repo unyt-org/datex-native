@@ -23,7 +23,7 @@ impl Widget for &Metadata {
                 "Endpoint: ".into(),
                 self.runtime.endpoint().to_string().bold(),
             ]),
-            Line::from(vec!["Version: ".into(), self.runtime.version().bold()]),
+            Line::from(vec!["Version: ".into(), self.runtime.version().clone().bold()]),
             // Line::from(vec![
             //     "Allocated pointers: ".into(),
             //     self.runtime

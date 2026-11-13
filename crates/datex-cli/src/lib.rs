@@ -1,12 +1,15 @@
 use datex_core::{
     decompiler::{
-        DecompileOptions, FormattingMode, FormattingOptions, decompile_value,
+        DecompileOptions, FormattingMode, FormattingOptions,
     },
     lsp::create_lsp,
     runtime::{RuntimeConfig, RuntimeRunner},
     values::core_values::endpoint::Endpoint,
 };
 use std::path::PathBuf;
+use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::runtime::CustomRuntimeInfo;
+use datex_core::runtime::execution::context::ExecutionContext;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 mod command_line_args;
@@ -39,9 +42,13 @@ pub async fn run() {
                 let stdin = tokio::io::stdin().compat();
                 let stdout = tokio::io::stdout().compat_write();
 
-                RuntimeRunner::new(RuntimeConfig::new_with_endpoint(
-                    Endpoint::default(),
-                ))
+                RuntimeRunner::new(
+                    RuntimeConfig::new_with_endpoint(Endpoint::default()),
+                    CustomRuntimeInfo {
+                        device_type: Some("datex-lsp".to_string()),
+                        ..Default::default()
+                    }
+                )
                 .run(async |runtime| {
                     create_lsp(runtime, stdin, stdout).await;
                 })
@@ -73,19 +80,18 @@ async fn execute_file(run: command_line_args::Run) {
         run_runtime_with_config(run.config.as_ref(), false, async |runtime| {
             let file_contents =
                 std::fs::read_to_string(file).expect("Could not read file");
-            let _result = runtime.execute(&file_contents, &[], None).await;
+            let _result = runtime.execute(&file_contents, &[], None::<ExecutionContext>, false).await;
             if let Err(e) = _result {
                 eprintln!("{}", e);
             } else {
                 let result = _result.unwrap();
                 if let Some(output) = result {
-                    let formatted_output = decompile_value(
+                    let formatted_output = value_to_source_code(
                         &output,
                         DecompileOptions {
                             formatting_options: FormattingOptions {
                                 mode: FormattingMode::pretty(),
                                 colorized: true,
-                                add_variant_suffix: true,
                                 ..FormattingOptions::default()
                             },
                             ..DecompileOptions::default()

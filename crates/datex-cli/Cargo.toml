@@ -23,6 +23,7 @@ datex-core = { version = "0.0.13", default-features = false, features = [
     "compiler",
     "lsp_tokio",
     "allow_unsigned_blocks",
+    "value_display"
 ] }
 datex-native = { path = "../datex-native", version = "0.0.12" }
 
@@ -36,6 +37,7 @@ serde_json = "1.0.145"
 flexi_logger = "0.31.8"
 colored = "3.1.1"
 tokio-util = { version = "0.7.18", features = ["compat"] }
+os_info = "3.15.0"
 
 
 [build-dependencies]

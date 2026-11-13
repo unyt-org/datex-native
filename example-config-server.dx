@@ -1,5 +1,6 @@
 {
     endpoint: @server,
+    name: "Example Native Server",
     interfaces: [
         {
             type: "websocket-server",
@@ -7,6 +8,13 @@
                 bind_address: "0.0.0.0:8043"
             },
             priority: #Priority(1u16)
+        },
+        {
+            type: "tcp-server",
+            config: {
+                port: 8042u16,
+            },
+            priority: #None
         }
     ]
 }

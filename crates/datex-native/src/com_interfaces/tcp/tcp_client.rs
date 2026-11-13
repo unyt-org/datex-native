@@ -18,13 +18,15 @@ use datex_core::network::{
 use futures_util::lock::Mutex;
 use log::{error, warn};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
 };
 
-#[derive(Datex)]
-#[datex(structural_recursive)]
+#[derive(Datex, Clone)]
+#[datex(structural)]
 pub struct TCPClientInterfaceSetupDataNative(pub TCPClientInterfaceSetupData);
 impl Deref for TCPClientInterfaceSetupDataNative {
     type Target = TCPClientInterfaceSetupData;
@@ -86,6 +88,7 @@ impl TCPClientInterfaceSetupDataNative {
                                 error!("WebSocket write error: {e}");
                                 SendFailure(Box::new(block))
                             })
+                            .map(|_| SendSuccess::Sent)
                     }
                 }),
             ),
@@ -100,6 +103,10 @@ impl ComInterfaceAsyncFactory for TCPClientInterfaceSetupDataNative {
 
     fn get_default_properties() -> ComInterfaceProperties {
         TCPClientInterfaceSetupData::get_default_properties()
+    }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        TCPClientInterfaceSetupData::get_reconnection_config()
     }
 }
 

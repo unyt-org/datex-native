@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 datex-core = { version = "0.0.13", default-features = false, features = [
     "target_native",
     "decompiler",
+    "disassembler",
     "syntax_highlighting_legacy",
     "compiler",
     "allow_unsigned_blocks",
@@ -52,6 +53,7 @@ rustls = { version = "0.23.41", optional = true, default-features = false, featu
     "tls12",
     "ring",
 ] }
+linkme = "0.3.37"
 
 [features]
 http = ["dep:async_tiny", "dep:reqwest"]
@@ -60,5 +62,7 @@ serial = ["dep:serialport"]
 tcp = []
 webrtc = ["dep:webrtc", "dep:rustls"]
 
+debug_dhat = ["datex-core/debug_dhat"]
+value_display = ["datex-core/value_display"]
 
 default = ["http", "websocket", "serial", "tcp", "webrtc"]

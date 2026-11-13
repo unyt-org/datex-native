@@ -21,6 +21,8 @@ use datex_core::{
         },
     },
 };
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
+
 mod channels;
 use channels::*;
 mod mapping;
@@ -32,7 +34,7 @@ use webrtc::{
 };
 
 #[derive(Datex)]
-#[datex(structural_recursive)]
+#[datex(structural, no_deserialize)]
 pub struct WebRTCInterfaceSetupDataNative {
     pub setup: WebRTCInterfaceSetupData,
     #[datex(skip)]
@@ -139,7 +141,7 @@ async fn create_webrtc_interface(
                 let data_channel = data_channel.clone();
                 async move {
                     let bytes = Bytes::from(block.to_bytes());
-                    data_channel.send(&bytes).await.map(|_| ()).map_err(|e| {
+                    data_channel.send(&bytes).await.map(|_| SendSuccess::Sent).map_err(|e| {
                         error!("WebRTC DataChannel send error: {e}");
                         SendFailure(Box::new(block))
                     })
