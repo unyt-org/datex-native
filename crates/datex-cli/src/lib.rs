@@ -80,7 +80,7 @@ async fn execute_file(run: command_line_args::Run) {
         run_runtime_with_config(run.config.as_ref(), false, async |runtime| {
             let file_contents =
                 std::fs::read_to_string(file).expect("Could not read file");
-            let _result = runtime.execute(&file_contents, &[], None::<ExecutionContext>).await;
+            let _result = runtime.execute(&file_contents, &[], None::<ExecutionContext>, false).await;
             if let Err(e) = _result {
                 eprintln!("{}", e);
             } else {

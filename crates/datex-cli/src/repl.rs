@@ -141,7 +141,7 @@ pub async fn repl(options: ReplOptions) -> Result<(), ReplError> {
                     }
                 }
                 ReplCommand::Execute(line) => {
-                    let result = runtime.execute(&line, &[], Some(&mut execution_context)).await;
+                    let result = runtime.execute(&line, &[], Some(&mut execution_context), false).await;
 
                     let mut result_string = None;
 
