@@ -20,7 +20,6 @@ datex-core = { version = "0.0.15", default-features = false, features = [
     "disassembler",
     "syntax_highlighting_legacy",
     "compiler",
-    "allow_unsigned_blocks",
 ] }
 
 futures-util = { version = "0.3" }
