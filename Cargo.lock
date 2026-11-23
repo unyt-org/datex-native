@@ -1029,7 +1029,6 @@ dependencies = [
  "async_tiny",
  "bytes",
  "datex-core",
- "ed25519",
  "flexi_logger",
  "futures",
  "futures-util",
@@ -1038,7 +1037,6 @@ dependencies = [
  "ntest_timeout",
  "reqwest",
  "rustls",
- "serde",
  "serialport",
  "tokio",
  "tokio-tungstenite",
@@ -1292,16 +1290,6 @@ dependencies = [
  "rfc6979",
  "signature",
  "spki",
-]
-
-[[package]]
-name = "ed25519"
-version = "2.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
-dependencies = [
- "pkcs8",
- "signature",
 ]
 
 [[package]]
