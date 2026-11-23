@@ -23,11 +23,9 @@ datex-core = { version = "0.0.15", default-features = false, features = [
     "allow_unsigned_blocks",
 ] }
 
-ed25519 = { version = "2.2.3", features = ["std"] }
 futures-util = { version = "0.3" }
 futures = { version = "0.3" }
 tokio = { version = "1.43.0" }
-serde = { version = "1.0.219" }
 ntest_timeout = "0.9.3"
 log = { version = "0.4", features = ["serde"] }
 url = { version = "2.5.8" }
@@ -53,7 +51,6 @@ rustls = { version = "0.23.41", optional = true, default-features = false, featu
     "tls12",
     "ring",
 ] }
-linkme = "0.3.37"
 
 [features]
 http = ["dep:async_tiny", "dep:reqwest"]
