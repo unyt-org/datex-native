@@ -7,7 +7,7 @@
             config: {
                 url: "ws://0.0.0.0:8043"
             },
-            priority: #None
+            priority: #Priority(1u16)
         }
     ]
 }
