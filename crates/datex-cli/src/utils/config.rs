@@ -105,42 +105,27 @@ pub fn create_new_config_file(
     Ok(config_path)
 }
 
+/// Load the config from the given path, or return a default config if no path is given.
+/// Also initialize the env variables and sets the vault location if none is set in the config.
 pub fn get_config(
     custom_config_path: Option<&PathBuf>,
     runtime: &Runtime,
 ) -> Result<RuntimeConfig, ConfigError> {
-    Ok(match custom_config_path {
+    let mut config = match custom_config_path {
         Some(path) => read_config_file(path, runtime)?,
-        None => {
-            match home::home_dir() {
-                Some(path) if !path.as_os_str().is_empty() => {
-                    // get all .dx files in the home directory .datex folder
-                    let dx_files = get_dx_files(path.clone())?;
-                    // if no files yet, create a new config file for a random endpoint
-                    if dx_files.is_empty() {
-                        let endpoint = Endpoint::random();
-                        let config_path =
-                            create_new_config_file(path.clone(), endpoint)?;
-                        read_config_file(&config_path, runtime)?
-                    } else {
-                        // if there are files, read the first one
-                        let config_path = dx_files.first().unwrap().clone();
-                        println!(
-                            "Using endpoint config file {}",
-                            config_path.to_str().unwrap()
-                        );
-                        read_config_file(&config_path, runtime)?
-                    }
-                }
-                _ => {
-                    eprintln!(
-                        "Unable to get home directory, using temporary endpoint."
-                    );
-                    RuntimeConfig::new_with_endpoint(Endpoint::random())
-                }
-            }
-        }
-    })
+        None => RuntimeConfig::default(),
+    };
+
+    config.load_host_env_vars();
+
+    // set path to the .datex folder if no vault_location is set in the config
+    if config.vault_location.is_none() && let Some(home_dir) = home::home_dir() {
+        let mut vault_path = home_dir.clone();
+        vault_path.push(".datex");
+        config.vault_location = Some(vault_path.to_string_lossy().into_owned());
+    }
+    
+    Ok(config)
 }
 
 pub async fn run_runtime_with_config<AppReturn, AppFuture>(
@@ -151,8 +136,7 @@ pub async fn run_runtime_with_config<AppReturn, AppFuture>(
 where
     AppFuture: Future<Output = AppReturn>,
 {
-    let mut config = get_config(custom_config_path, &Runtime::stub())?;
-    config.load_host_env_vars();
+    let config = get_config(custom_config_path, &Runtime::stub())?;
 
     let device_info = os_info::get();
 
