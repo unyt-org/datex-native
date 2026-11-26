@@ -1,10 +1,6 @@
 use colored::Colorize;
 use datex_core::{
-    datex_proxy::{
-        DatexValueContainerProxyDeserialize,
-        DatexValueContainerProxyInfallibleSerialize, DeserializationError,
-    },
-    decompiler::{DecompileOptions, FormattingOptions, decompile_value},
+    decompiler::{DecompileOptions, FormattingOptions},
     network::{
         com_hub::InterfacePriority,
         com_interfaces::default_setup_data::websocket::websocket_client::WebSocketClientInterfaceSetupData,
@@ -17,6 +13,9 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use datex_core::decompiler::ast_to_source_code::value_to_source_code;
+use datex_core::runtime::CustomRuntimeInfo;
+use datex_core::traits::convert_value_container::{ConvertValueContainer, DeserializationError};
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -88,11 +87,11 @@ pub fn create_new_config_file(
     let mut config_path = base_path.clone();
     config_path.push(".datex");
     config_path.push(format!("{endpoint}.dx"));
-    let config = config.to_value_container_without_cache();
-    let datex_script = decompile_value(
+    let config = config.to_value_container();
+    let datex_script = value_to_source_code(
         &config,
         DecompileOptions {
-            formatting_options: FormattingOptions::default(),
+            formatting_options: FormattingOptions::pretty(),
             ..DecompileOptions::default()
         },
     );
@@ -106,42 +105,27 @@ pub fn create_new_config_file(
     Ok(config_path)
 }
 
+/// Load the config from the given path, or return a default config if no path is given.
+/// Also initialize the env variables and sets the vault location if none is set in the config.
 pub fn get_config(
     custom_config_path: Option<&PathBuf>,
     runtime: &Runtime,
 ) -> Result<RuntimeConfig, ConfigError> {
-    Ok(match custom_config_path {
+    let mut config = match custom_config_path {
         Some(path) => read_config_file(path, runtime)?,
-        None => {
-            match home::home_dir() {
-                Some(path) if !path.as_os_str().is_empty() => {
-                    // get all .dx files in the home directory .datex folder
-                    let dx_files = get_dx_files(path.clone())?;
-                    // if no files yet, create a new config file for a random endpoint
-                    if dx_files.is_empty() {
-                        let endpoint = Endpoint::random();
-                        let config_path =
-                            create_new_config_file(path.clone(), endpoint)?;
-                        read_config_file(&config_path, runtime)?
-                    } else {
-                        // if there are files, read the first one
-                        let config_path = dx_files.first().unwrap().clone();
-                        println!(
-                            "Using endpoint config file {}",
-                            config_path.to_str().unwrap()
-                        );
-                        read_config_file(&config_path, runtime)?
-                    }
-                }
-                _ => {
-                    eprintln!(
-                        "Unable to get home directory, using temporary endpoint."
-                    );
-                    RuntimeConfig::new_with_endpoint(Endpoint::random())
-                }
-            }
-        }
-    })
+        None => RuntimeConfig::default(),
+    };
+
+    config.load_host_env_vars();
+
+    // set path to the .datex folder if no vault_location is set in the config
+    if config.vault_location.is_none() && let Some(home_dir) = home::home_dir() {
+        let mut vault_path = home_dir.clone();
+        vault_path.push(".datex");
+        config.vault_location = Some(vault_path.to_string_lossy().into_owned());
+    }
+    
+    Ok(config)
 }
 
 pub async fn run_runtime_with_config<AppReturn, AppFuture>(
@@ -152,10 +136,14 @@ pub async fn run_runtime_with_config<AppReturn, AppFuture>(
 where
     AppFuture: Future<Output = AppReturn>,
 {
-    let mut config = get_config(custom_config_path, &Runtime::stub())?;
-    config.load_host_env_vars();
+    let config = get_config(custom_config_path, &Runtime::stub())?;
 
-    let runner = RuntimeRunner::new(config);
+    let device_info = os_info::get();
+
+    let runner = RuntimeRunner::new(config, CustomRuntimeInfo {
+        device_type: Some(device_info.to_string()),
+        ..Default::default()
+    }).await;
     register_native_interface_factories(&runner.runtime.com_hub());
 
     Ok(runner

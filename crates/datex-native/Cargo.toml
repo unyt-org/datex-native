@@ -14,19 +14,17 @@ license-file = "../../LICENSE"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-datex-core = { version = "0.0.13", default-features = false, features = [
+datex-core = { version = "0.0.15", default-features = false, features = [
     "target_native",
     "decompiler",
+    "disassembler",
     "syntax_highlighting_legacy",
     "compiler",
-    "allow_unsigned_blocks",
 ] }
 
-ed25519 = { version = "2.2.3", features = ["std"] }
 futures-util = { version = "0.3" }
 futures = { version = "0.3" }
 tokio = { version = "1.43.0" }
-serde = { version = "1.0.219" }
 ntest_timeout = "0.9.3"
 log = { version = "0.4", features = ["serde"] }
 url = { version = "2.5.8" }
@@ -52,6 +50,7 @@ rustls = { version = "0.23.41", optional = true, default-features = false, featu
     "tls12",
     "ring",
 ] }
+linkme = "0.3.37" # FIXME: required for Datex macros
 
 [features]
 http = ["dep:async_tiny", "dep:reqwest"]
@@ -60,5 +59,7 @@ serial = ["dep:serialport"]
 tcp = []
 webrtc = ["dep:webrtc", "dep:rustls"]
 
+debug_dhat = ["datex-core/debug_dhat"]
+value_display = ["datex-core/value_display"]
 
 default = ["http", "websocket", "serial", "tcp", "webrtc"]

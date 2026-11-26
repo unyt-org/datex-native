@@ -24,12 +24,13 @@ use futures_util::{
 };
 use log::{error, info};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{WebSocketStream, accept_async};
 use tungstenite::Message;
 
-#[derive(Datex)]
-#[datex(structural_recursive)]
+#[derive(Datex, Clone)]
+#[datex(structural)]
 pub struct WebSocketServerInterfaceSetupDataNative(
     pub WebSocketServerInterfaceSetupData,
 );
@@ -115,6 +116,7 @@ impl WebSocketServerInterfaceSetupDataNative {
                                                 error!("WebSocket write error: {e}");
                                                 SendFailure(Box::new(block))
                                             })
+                                            .map(|_| SendSuccess::Sent)
                                         }
                                     },
                                 ),

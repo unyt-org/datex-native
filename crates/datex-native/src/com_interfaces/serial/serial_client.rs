@@ -26,10 +26,11 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio::task::spawn_blocking;
 
-#[derive(Datex)]
-#[datex(structural_recursive)]
+#[derive(Datex, Clone)]
+#[datex(structural)]
 pub struct SerialClientInterfaceSetupDataNative(
     pub SerialClientInterfaceSetupData,
 );
@@ -130,5 +131,9 @@ impl ComInterfaceAsyncFactory for SerialClientInterfaceSetupDataNative {
 
     fn get_default_properties() -> ComInterfaceProperties {
         SerialClientInterfaceSetupData::get_default_properties()
+    }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        SerialClientInterfaceSetupData::get_reconnection_config()
     }
 }

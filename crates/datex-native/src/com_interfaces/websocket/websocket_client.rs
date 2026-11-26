@@ -31,10 +31,12 @@ use datex_core::{
         },
     },
 };
+use datex_core::network::com_interfaces::com_interface::factory::SendSuccess;
+use datex_core::network::com_interfaces::com_interface::properties::ReconnectionConfig;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
-#[derive(Datex)]
-#[datex(structural_recursive)]
+#[derive(Datex, Clone)]
+#[datex(structural)]
 pub struct WebSocketClientInterfaceSetupDataNative(
     pub WebSocketClientInterfaceSetupData,
 );
@@ -95,6 +97,7 @@ impl WebSocketClientInterfaceSetupDataNative {
                                 error!("WebSocket write error: {e}");
                                 SendFailure(Box::new(block))
                             })
+                            .map(|_| SendSuccess::Sent)
                     }
                 }),
             ),
@@ -142,5 +145,9 @@ impl ComInterfaceAsyncFactory for WebSocketClientInterfaceSetupDataNative {
 
     fn get_default_properties() -> ComInterfaceProperties {
         WebSocketClientInterfaceSetupData::get_default_properties()
+    }
+
+    fn get_reconnection_config() -> ReconnectionConfig {
+        WebSocketClientInterfaceSetupData::get_reconnection_config()
     }
 }
