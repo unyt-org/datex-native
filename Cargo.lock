@@ -938,8 +938,8 @@ dependencies = [
  "cfg-if",
  "chrono",
  "datex-facades",
+ "datex-impls-native",
  "datex-macros-internal",
- "datex-nat-impls",
  "dhat",
  "dotenvy",
  "erased-serde",
@@ -991,6 +991,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "datex-impls-native"
+version = "0.0.1"
+dependencies = [
+ "datex-facades",
+ "openssl",
+ "rand 0.10.2",
+ "uuid",
+]
+
+[[package]]
 name = "datex-macro-utils"
 version = "0.0.3"
 dependencies = [
@@ -1010,16 +1020,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.4",
-]
-
-[[package]]
-name = "datex-nat-impls"
-version = "0.0.1"
-dependencies = [
- "datex-facades",
- "openssl",
- "rand 0.10.2",
- "uuid",
 ]
 
 [[package]]

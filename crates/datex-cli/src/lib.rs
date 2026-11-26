@@ -49,6 +49,7 @@ pub async fn run() {
                         ..Default::default()
                     }
                 )
+                .await
                 .run(async |runtime| {
                     create_lsp(runtime, stdin, stdout).await;
                 })

@@ -159,7 +159,7 @@ where
     let runner = RuntimeRunner::new(config, CustomRuntimeInfo {
         device_type: Some(device_info.to_string()),
         ..Default::default()
-    });
+    }).await;
     register_native_interface_factories(&runner.runtime.com_hub());
 
     Ok(runner
